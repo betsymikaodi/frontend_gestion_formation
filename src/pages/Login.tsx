@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, GraduationCap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,8 +19,16 @@ import {
 
 const Login: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { login, createAccount } = useAuth();
+  const { login, createAccount, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
   
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,6 +58,8 @@ const Login: React.FC = () => {
             title: t('loginSuccess'),
             description: `${t('welcomeBack')}, ${formData.email}!`,
           });
+          // Redirect to dashboard after successful login
+          navigate('/dashboard');
         } else {
           toast({
             title: "Error",
