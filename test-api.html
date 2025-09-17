@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Apprenants</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .student { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        input, textarea { 
+            width: 100%; 
+            padding: 8px; 
+            margin: 5px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 3px;
+        }
+        .form-group { margin: 10px 0; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 5px; }
+        .success { color: #155724; background: #d4edda; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Test API Apprenants - Spring Boot</h1>
+        
+        <div class="form-group">
+            <button onclick="loadStudents()">🔄 Charger les étudiants</button>
+            <button onclick="showAddForm()">➕ Ajouter un étudiant</button>
+        </div>
+
+        <div id="message"></div>
+        
+        <!-- Formulaire d'ajout -->
+        <div id="addForm" style="display: none; background: #e9ecef; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3>Ajouter un nouvel étudiant</h3>
+            <div class="form-group">
+                <label>Prénom *:</label>
+                <input type="text" id="prenom" required>
+            </div>
+            <div class="form-group">
+                <label>Nom *:</label>
+                <input type="text" id="nom" required>
+            </div>
+            <div class="form-group">
+                <label>Email *:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Téléphone:</label>
+                <input type="text" id="telephone">
+            </div>
+            <div class="form-group">
+                <label>Adresse:</label>
+                <textarea id="adresse" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Date de naissance:</label>
+                <input type="date" id="dateNaissance">
+            </div>
+            <div class="form-group">
+                <label>CIN *:</label>
+                <input type="text" id="cin" required>
+            </div>
+            <button onclick="addStudent()">✅ Ajouter</button>
+            <button onclick="hideAddForm()">❌ Annuler</button>
+        </div>
+
+        <div id="studentsContainer">
+            <p class="loading">Cliquez sur "Charger les étudiants" pour voir la liste</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+            // Reset form
+            document.getElementById('prenom').value = '';
+            document.getElementById('nom').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('telephone').value = '';
+            document.getElementById('adresse').value = '';
+            document.getElementById('dateNaissance').value = '';
+            document.getElementById('cin').value = '';
+        }
+
+        async function loadStudents() {
+            const container = document.getElementById('studentsContainer');
+            container.innerHTML = '<p class="loading">Chargement des étudiants...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/apprenants`, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const students = await response.json();
+                displayStudents(students);
+                showMessage(`✅ ${students.length} étudiant(s) chargé(s)`, 'success');
+            } catch (error) {
+                console.error('Erreur:', error);
+                container.innerHTML = `<div class="error">Erreur lors du chargement: ${error.message}</div>`;
+                showMessage('❌ Erreur lors du chargement', 'error');
+            }
+        }
+
+        function displayStudents(students) {
+            const container = document.getElementById('studentsContainer');
+            
+            if (students.length === 0) {
+                container.innerHTML = '<p>Aucun étudiant trouvé</p>';
+                return;
+            }
+            
+            let html = `<h3>📋 Liste des étudiants (${students.length})</h3>`;
+            
+            students.forEach(student => {
+                const inscriptions = student.inscriptions ? student.inscriptions.length : 0;
+                html += `
+                    <div class="student">
+                        <h4>🎓 ${student.prenom} ${student.nom}</h4>
+                        <p><strong>📧 Email:</strong> ${student.email}</p>
+                        <p><strong>📱 Téléphone:</strong> ${student.telephone || 'Non renseigné'}</p>
+                        <p><strong>🏠 Adresse:</strong> ${student.adresse || 'Non renseignée'}</p>
+                        <p><strong>🎂 Date de naissance:</strong> ${student.dateNaissance || 'Non renseignée'}</p>
+                        <p><strong>🆔 CIN:</strong> ${student.cin}</p>
+                        <p><strong>📚 Inscriptions:</strong> ${inscriptions} formation(s)</p>
+                        <button onclick="deleteStudent(${student.idApprenant}, '${student.prenom} ${student.nom}')" 
+                                style="background: #dc3545;">🗑️ Supprimer</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        async function addStudent() {
+            const formData = {
+                prenom: document.getElementById('prenom').value.trim(),
+                nom: document.getElementById('nom').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                telephone: document.getElementById('telephone').value.trim(),
+                adresse: document.getElementById('adresse').value.trim(),
+                dateNaissance: document.getElementById('dateNaissance').value,
+                cin: document.getElementById('cin').value.trim(),
+            };
+
+            // Validation
+            if (!formData.prenom || !formData.nom || !formData.email || !formData.cin) {
+                showMessage('❌ Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/apprenants`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur ${response.status}: ${errorText}`);
+                }
+
+                const newStudent = await response.json();
+                showMessage(`✅ ${formData.prenom} ${formData.nom} ajouté(e) avec succès!`, 'success');
+                hideAddForm();
+                loadStudents(); // Recharger la liste
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage(`❌ Erreur lors de l'ajout: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteStudent(id, name) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer ${name} ?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/apprenants/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur ${response.status}: ${errorText}`);
+                }
+
+                showMessage(`✅ ${name} supprimé(e) avec succès!`, 'success');
+                loadStudents(); // Recharger la liste
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage(`❌ Erreur lors de la suppression: ${error.message}`, 'error');
+            }
+        }
+
+        // Charger automatiquement au démarrage
+        window.onload = () => {
+            loadStudents();
+        };
+    </script>
+</body>
+</html>

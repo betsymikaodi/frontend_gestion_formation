@@ -13,6 +13,7 @@ import {
   Filter,
   Download,
   Eye,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,149 +49,375 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Student } from '@/types';
 import { cn } from '@/lib/utils';
+
+// Interface pour l'API Spring Boot
+interface Apprenant {
+  idApprenant?: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone?: string;
+  adresse?: string;
+  dateNaissance?: string;
+  cin: string;
+  nomComplet?: string;
+  inscriptions?: any[];
+}
+
+// Service API
+const API_BASE_URL = 'http://localhost:8080/api';
+
+const apiService = {
+  async getAll(): Promise<Apprenant[]> {
+    const response = await fetch(`${API_BASE_URL}/apprenants`, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Erreur lors de la récupération des apprenants');
+    return response.json();
+  },
+
+  async create(apprenant: Omit<Apprenant, 'idApprenant'>): Promise<Apprenant> {
+    const response = await fetch(`${API_BASE_URL}/apprenants`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(apprenant),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur lors de la création: ${errorText}`);
+    }
+    return response.json();
+  },
+
+  async update(id: number, apprenant: Apprenant): Promise<Apprenant> {
+    const response = await fetch(`${API_BASE_URL}/apprenants/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(apprenant),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur lors de la mise à jour: ${errorText}`);
+    }
+    return response.json();
+  },
+
+  async delete(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/apprenants/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur lors de la suppression: ${errorText}`);
+    }
+  },
+};
+
+// Composant StudentForm séparé pour éviter les re-renders
+interface StudentFormProps {
+  formData: {
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string;
+    dateNaissance: string;
+    adresse: string;
+    cin: string;
+  };
+  setFormData: React.Dispatch<React.SetStateAction<{
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string;
+    dateNaissance: string;
+    adresse: string;
+    cin: string;
+  }>>;
+  loading: boolean;
+  onSubmit: () => void;
+  onCancel: () => void;
+  submitLabel: string;
+  t: (key: string) => string;
+}
+
+const StudentForm: React.FC<StudentFormProps> = React.memo(({ 
+  formData, 
+  setFormData, 
+  loading, 
+  onSubmit, 
+  onCancel, 
+  submitLabel, 
+  t 
+}) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label htmlFor="prenom">Prénom *</Label>
+        <Input
+          id="prenom"
+          value={formData.prenom}
+          onChange={(e) => setFormData(prev => ({ ...prev, prenom: e.target.value }))}
+          className="glass border-border/30"
+          disabled={loading}
+          autoComplete="given-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="nom">Nom *</Label>
+        <Input
+          id="nom"
+          value={formData.nom}
+          onChange={(e) => setFormData(prev => ({ ...prev, nom: e.target.value }))}
+          className="glass border-border/30"
+          disabled={loading}
+          autoComplete="family-name"
+        />
+      </div>
+    </div>
+
+    <div className="space-y-2">
+      <Label htmlFor="email">Email *</Label>
+      <Input
+        id="email"
+        type="email"
+        value={formData.email}
+        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+        className="glass border-border/30"
+        disabled={loading}
+        autoComplete="email"
+      />
+    </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label htmlFor="telephone">Téléphone</Label>
+        <Input
+          id="telephone"
+          value={formData.telephone}
+          onChange={(e) => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
+          className="glass border-border/30"
+          disabled={loading}
+          autoComplete="tel"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="dateNaissance">Date de naissance</Label>
+        <Input
+          id="dateNaissance"
+          type="date"
+          value={formData.dateNaissance}
+          onChange={(e) => setFormData(prev => ({ ...prev, dateNaissance: e.target.value }))}
+          className="glass border-border/30"
+          disabled={loading}
+          autoComplete="bday"
+        />
+      </div>
+    </div>
+
+    <div className="space-y-2">
+      <Label htmlFor="adresse">Adresse</Label>
+      <Input
+        id="adresse"
+        value={formData.adresse}
+        onChange={(e) => setFormData(prev => ({ ...prev, adresse: e.target.value }))}
+        className="glass border-border/30"
+        disabled={loading}
+        autoComplete="street-address"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label htmlFor="cin">CIN *</Label>
+      <Input
+        id="cin"
+        value={formData.cin}
+        onChange={(e) => setFormData(prev => ({ ...prev, cin: e.target.value }))}
+        className="glass border-border/30"
+        disabled={loading}
+        autoComplete="off"
+      />
+    </div>
+
+    <div className="flex justify-end gap-3 pt-4">
+      <Button variant="outline" onClick={onCancel} disabled={loading}>
+        {t('cancel')}
+      </Button>
+      <Button onClick={onSubmit} className="gradient-primary text-white" disabled={loading}>
+        {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        {submitLabel}
+      </Button>
+    </div>
+  </div>
+));
 
 const Students: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<Apprenant[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Apprenant | null>(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    nom: '',
+    prenom: '',
     email: '',
-    phone: '',
-    dateOfBirth: '',
-    address: '',
-    status: 'active' as 'active' | 'inactive',
+    telephone: '',
+    dateNaissance: '',
+    adresse: '',
+    cin: '',
   });
 
   useEffect(() => {
     loadStudents();
   }, []);
 
-  const loadStudents = () => {
-    const stored = localStorage.getItem('students');
-    if (stored) {
-      setStudents(JSON.parse(stored));
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const apprenants = await apiService.getAll();
+      setStudents(apprenants);
+    } catch (error) {
+      console.error('Erreur lors du chargement:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger la liste des étudiants",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const saveStudents = (updatedStudents: Student[]) => {
-    localStorage.setItem('students', JSON.stringify(updatedStudents));
-    setStudents(updatedStudents);
   };
 
   const resetForm = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
+      nom: '',
+      prenom: '',
       email: '',
-      phone: '',
-      dateOfBirth: '',
-      address: '',
-      status: 'active',
+      telephone: '',
+      dateNaissance: '',
+      adresse: '',
+      cin: '',
     });
   };
 
-  const handleAddStudent = () => {
-    if (!formData.firstName || !formData.lastName || !formData.email) {
+  const handleAddStudent = async () => {
+    if (!formData.nom || !formData.prenom || !formData.email || !formData.cin) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires (Nom, Prénom, Email, CIN)",
         variant: "destructive",
       });
       return;
     }
 
-    // Check if email already exists
-    if (students.some(s => s.email === formData.email)) {
+    try {
+      setLoading(true);
+      const newApprenant = await apiService.create(formData);
+      
       toast({
-        title: "Error",
-        description: "Student with this email already exists",
+        title: "Succès",
+        description: `${formData.prenom} ${formData.nom} a été ajouté(e) avec succès.`,
+      });
+
+      resetForm();
+      setIsAddDialogOpen(false);
+      await loadStudents(); // Recharger la liste
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors de l'ajout de l'étudiant",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditStudent = async () => {
+    if (!selectedStudent) return;
+    if (!formData.nom || !formData.prenom || !formData.email || !formData.cin) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires (Nom, Prénom, Email, CIN)",
         variant: "destructive",
       });
       return;
     }
 
-    const newStudent: Student = {
-      id: `student-${Date.now()}`,
-      ...formData,
-      enrollmentDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedStudents = [...students, newStudent];
-    saveStudents(updatedStudents);
-    
-    toast({
-      title: t('studentAddedSuccess'),
-      description: `${formData.firstName} ${formData.lastName} has been added.`,
-    });
-
-    resetForm();
-    setIsAddDialogOpen(false);
-  };
-
-  const handleEditStudent = () => {
-    if (!selectedStudent || !formData.firstName || !formData.lastName || !formData.email) {
-      return;
-    }
-
-    // Check if email already exists for other students
-    if (students.some(s => s.email === formData.email && s.id !== selectedStudent.id)) {
+    try {
+      setLoading(true);
+      await apiService.update(selectedStudent.idApprenant!, formData);
+      
       toast({
-        title: "Error",
-        description: "Student with this email already exists",
+        title: t('studentUpdatedSuccess'),
+        description: `${formData.prenom} ${formData.nom} a été mis(e) à jour.`,
+      });
+
+      resetForm();
+      setIsEditDialogOpen(false);
+      setSelectedStudent(null);
+      await loadStudents();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'étudiant",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const updatedStudents = students.map(student =>
-      student.id === selectedStudent.id
-        ? { ...student, ...formData }
-        : student
-    );
-
-    saveStudents(updatedStudents);
-    
-    toast({
-      title: t('studentUpdatedSuccess'),
-      description: `${formData.firstName} ${formData.lastName} has been updated.`,
-    });
-
-    resetForm();
-    setIsEditDialogOpen(false);
-    setSelectedStudent(null);
   };
 
-  const handleDeleteStudent = (student: Student) => {
-    const updatedStudents = students.filter(s => s.id !== student.id);
-    saveStudents(updatedStudents);
+  const handleDeleteStudent = async (student: Apprenant) => {
+    if (!student.idApprenant) return;
     
-    toast({
-      title: t('studentDeletedSuccess'),
-      description: `${student.firstName} ${student.lastName} has been removed.`,
-    });
+    try {
+      setLoading(true);
+      await apiService.delete(student.idApprenant);
+      
+      toast({
+        title: t('studentDeletedSuccess'),
+        description: `${student.prenom} ${student.nom} a été supprimé(e).`,
+      });
+      
+      await loadStudents();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors de la suppression de l'étudiant",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openEditDialog = (student: Student) => {
+  const openEditDialog = (student: Apprenant) => {
     setSelectedStudent(student);
     setFormData({
-      firstName: student.firstName,
-      lastName: student.lastName,
+      nom: student.nom,
+      prenom: student.prenom,
       email: student.email,
-      phone: student.phone,
-      dateOfBirth: student.dateOfBirth,
-      address: student.address,
-      status: student.status,
+      telephone: student.telephone || '',
+      dateNaissance: student.dateNaissance || '',
+      adresse: student.adresse || '',
+      cin: student.cin,
     });
     setIsEditDialogOpen(true);
   };
@@ -198,11 +425,13 @@ const Students: React.FC = () => {
   // Filter students
   const filteredStudents = students.filter(student => {
     const matchesSearch = 
-      student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      student.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.cin.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
+    // Pour la compatibilité avec le filtre de status, on considère tous comme actifs
+    const matchesStatus = statusFilter === 'all' || statusFilter === 'active';
     
     return matchesSearch && matchesStatus;
   });
@@ -227,103 +456,6 @@ const Students: React.FC = () => {
       },
     },
   };
-
-  const StudentForm = ({ onSubmit, onCancel, submitLabel }: {
-    onSubmit: () => void;
-    onCancel: () => void;
-    submitLabel: string;
-  }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">{t('firstName')} *</Label>
-          <Input
-            id="firstName"
-            value={formData.firstName}
-            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-            className="glass border-border/30"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastName">{t('lastName')} *</Label>
-          <Input
-            id="lastName"
-            value={formData.lastName}
-            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-            className="glass border-border/30"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">{t('email')} *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-          className="glass border-border/30"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone">{t('phone')}</Label>
-          <Input
-            id="phone"
-            value={formData.phone}
-            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-            className="glass border-border/30"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="dateOfBirth">{t('dateOfBirth')}</Label>
-          <Input
-            id="dateOfBirth"
-            type="date"
-            value={formData.dateOfBirth}
-            onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-            className="glass border-border/30"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="address">{t('address')}</Label>
-        <Input
-          id="address"
-          value={formData.address}
-          onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-          className="glass border-border/30"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="status">{t('status')}</Label>
-        <Select
-          value={formData.status}
-          onValueChange={(value: 'active' | 'inactive') => setFormData(prev => ({ ...prev, status: value }))}
-        >
-          <SelectTrigger className="glass border-border/30">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="glass-card">
-            <SelectItem value="active">{t('active')}</SelectItem>
-            <SelectItem value="inactive">{t('inactive')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4">
-        <Button variant="outline" onClick={onCancel}>
-          {t('cancel')}
-        </Button>
-        <Button onClick={onSubmit} className="gradient-primary text-white">
-          {submitLabel}
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <motion.div
@@ -370,9 +502,13 @@ const Students: React.FC = () => {
                       </DialogDescription>
                     </DialogHeader>
                     <StudentForm
+                      formData={formData}
+                      setFormData={setFormData}
+                      loading={loading}
                       onSubmit={handleAddStudent}
                       onCancel={() => setIsAddDialogOpen(false)}
                       submitLabel={t('addStudent')}
+                      t={t}
                     />
                   </DialogContent>
                 </Dialog>
@@ -414,10 +550,11 @@ const Students: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30">
-                    <TableHead className="text-foreground font-semibold">Student</TableHead>
+                    <TableHead className="text-foreground font-semibold">Étudiant</TableHead>
                     <TableHead className="text-foreground font-semibold">Contact</TableHead>
-                    <TableHead className="text-foreground font-semibold">Status</TableHead>
-                    <TableHead className="text-foreground font-semibold">Enrollment Date</TableHead>
+                    <TableHead className="text-foreground font-semibold">CIN</TableHead>
+                    <TableHead className="text-foreground font-semibold">Date de naissance</TableHead>
+                    <TableHead className="text-foreground font-semibold">Inscriptions</TableHead>
                     <TableHead className="text-foreground font-semibold text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -425,7 +562,7 @@ const Students: React.FC = () => {
                   <AnimatePresence>
                     {filteredStudents.map((student, index) => (
                       <motion.tr
-                        key={student.id}
+                        key={student.idApprenant || index}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
@@ -436,12 +573,12 @@ const Students: React.FC = () => {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center">
                               <span className="text-white font-medium">
-                                {student.firstName[0]}{student.lastName[0]}
+                                {student.prenom[0]}{student.nom[0]}
                               </span>
                             </div>
                             <div>
                               <p className="font-medium text-foreground">
-                                {student.firstName} {student.lastName}
+                                {student.prenom} {student.nom}
                               </p>
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Mail className="w-3 h-3" />
@@ -452,35 +589,35 @@ const Students: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            {student.phone && (
+                            {student.telephone && (
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Phone className="w-3 h-3" />
-                                {student.phone}
+                                {student.telephone}
                               </p>
                             )}
-                            {student.address && (
+                            {student.adresse && (
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <MapPin className="w-3 h-3" />
-                                {student.address}
+                                {student.adresse}
                               </p>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={student.status === 'active' ? 'default' : 'secondary'}
-                            className={cn(
-                              student.status === 'active' ? 'bg-success text-success-foreground' : 'bg-muted'
-                            )}
-                          >
-                            {t(student.status)}
-                          </Badge>
+                          <span className="font-mono text-sm">{student.cin}</span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(student.enrollmentDate).toLocaleDateString()}
-                          </div>
+                          {student.dateNaissance && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(student.dateNaissance).toLocaleDateString('fr-FR')}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {student.inscriptions?.length || 0} inscription(s)
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
@@ -511,6 +648,9 @@ const Students: React.FC = () => {
                                   </DialogDescription>
                                 </DialogHeader>
                                 <StudentForm
+                                  formData={formData}
+                                  setFormData={setFormData}
+                                  loading={loading}
                                   onSubmit={handleEditStudent}
                                   onCancel={() => {
                                     setIsEditDialogOpen(false);
@@ -518,6 +658,7 @@ const Students: React.FC = () => {
                                     resetForm();
                                   }}
                                   submitLabel={t('save')}
+                                  t={t}
                                 />
                               </DialogContent>
                             </Dialog>
@@ -536,8 +677,8 @@ const Students: React.FC = () => {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>{t('deleteStudent')}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete {student.firstName} {student.lastName}? 
-                                    This action cannot be undone.
+                                    Êtes-vous sûr de vouloir supprimer {student.prenom} {student.nom} ? 
+                                    Cette action ne peut pas être annulée.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -559,9 +700,16 @@ const Students: React.FC = () => {
                 </TableBody>
               </Table>
               
-              {filteredStudents.length === 0 && (
+              {loading && (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No students found</p>
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                  <p className="text-muted-foreground">Chargement...</p>
+                </div>
+              )}
+              
+              {!loading && filteredStudents.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Aucun étudiant trouvé</p>
                 </div>
               )}
             </div>
