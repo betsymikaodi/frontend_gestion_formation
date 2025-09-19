@@ -85,7 +85,7 @@ const resources = {
       createAccount: "Créer un compte",
       
       // Dashboard
-      welcomeBack: "Bon retour",
+      welcomeBack: "Bienvenue",
       totalStudents: "Total des étudiants",
       totalEnrollments: "Total des inscriptions",
       pendingPayments: "Paiements en attente",
