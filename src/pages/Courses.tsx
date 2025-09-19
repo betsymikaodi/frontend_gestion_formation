@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,22 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const Courses = () => {
   const { toast } = useToast();
-  const [courses, setCourses] = useState<Course[]>([
-    {
-      id: '1',
-      name: 'Formation React Avancé',
-      description: 'Formation complète sur React avec hooks, context et patterns avancés',
-      fee: 1500,
-      duration: 90
-    },
-    {
-      id: '2', 
-      name: 'Formation Node.js',
-      description: 'Développement backend avec Node.js, Express et MongoDB',
-      fee: 1200,
-      duration: 60
-    }
-  ]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -38,27 +24,50 @@ const Courses = () => {
 
   // Add course form state
   const [addForm, setAddForm] = useState({
-    name: '',
+    nom: '',
     description: '',
-    fee: '',
-    duration: ''
+    frais: '',
+    duree: ''
   });
 
   // Edit course form state  
   const [editForm, setEditForm] = useState({
-    name: '',
+    nom: '',
     description: '',
-    fee: '',
-    duration: ''
+    frais: '',
+    duree: ''
   });
 
+  // Fetch formations from API
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:8080/api/formations');
+      if (!response.ok) throw new Error('Erreur lors du chargement');
+      const data = await response.json();
+      setCourses(data);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les formations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredCourses = courses.filter(course =>
-    course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddCourse = () => {
-    if (!addForm.name || !addForm.description || !addForm.fee || !addForm.duration) {
+  const handleAddCourse = async () => {
+    if (!addForm.nom || !addForm.description || !addForm.frais || !addForm.duree) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -67,26 +76,41 @@ const Courses = () => {
       return;
     }
 
-    const newCourse: Course = {
-      id: Date.now().toString(),
-      name: addForm.name,
-      description: addForm.description,
-      fee: parseFloat(addForm.fee),
-      duration: parseInt(addForm.duration)
-    };
+    try {
+      const response = await fetch('http://localhost:8080/api/formations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: addForm.nom,
+          description: addForm.description,
+          frais: parseFloat(addForm.frais),
+          duree: parseInt(addForm.duree)
+        }),
+      });
 
-    setCourses([...courses, newCourse]);
-    setAddForm({ name: '', description: '', fee: '', duration: '' });
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Succès",
-      description: "Formation ajoutée avec succès"
-    });
+      if (!response.ok) throw new Error('Erreur lors de la création');
+
+      setAddForm({ nom: '', description: '', frais: '', duree: '' });
+      setIsAddDialogOpen(false);
+      await fetchCourses();
+      
+      toast({
+        title: "Succès",
+        description: "Formation ajoutée avec succès"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la formation",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditCourse = () => {
-    if (!editForm.name || !editForm.description || !editForm.fee || !editForm.duration) {
+  const handleEditCourse = async () => {
+    if (!editForm.nom || !editForm.description || !editForm.frais || !editForm.duree) {
       toast({
         title: "Erreur", 
         description: "Veuillez remplir tous les champs obligatoires",
@@ -97,42 +121,68 @@ const Courses = () => {
 
     if (!editingCourse) return;
 
-    const updatedCourse: Course = {
-      ...editingCourse,
-      name: editForm.name,
-      description: editForm.description,
-      fee: parseFloat(editForm.fee),
-      duration: parseInt(editForm.duration)
-    };
+    try {
+      const response = await fetch(`http://localhost:8080/api/formations/${editingCourse.id_formation}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: editForm.nom,
+          description: editForm.description,
+          frais: parseFloat(editForm.frais),
+          duree: parseInt(editForm.duree)
+        }),
+      });
 
-    setCourses(courses.map(course => 
-      course.id === editingCourse.id ? updatedCourse : course
-    ));
-    
-    setIsEditDialogOpen(false);
-    setEditingCourse(null);
-    
-    toast({
-      title: "Succès",
-      description: "Formation mise à jour avec succès"
-    });
+      if (!response.ok) throw new Error('Erreur lors de la modification');
+
+      setIsEditDialogOpen(false);
+      setEditingCourse(null);
+      await fetchCourses();
+      
+      toast({
+        title: "Succès",
+        description: "Formation mise à jour avec succès"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier la formation",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteCourse = (courseId: string) => {
-    setCourses(courses.filter(course => course.id !== courseId));
-    toast({
-      title: "Succès",
-      description: "Formation supprimée avec succès"
-    });
+  const handleDeleteCourse = async (courseId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/formations/${courseId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+      await fetchCourses();
+      toast({
+        title: "Succès",
+        description: "Formation supprimée avec succès"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la formation",
+        variant: "destructive"
+      });
+    }
   };
 
   const openEditDialog = (course: Course) => {
     setEditingCourse(course);
     setEditForm({
-      name: course.name,
+      nom: course.nom,
       description: course.description,
-      fee: course.fee.toString(),
-      duration: course.duration.toString()
+      frais: course.frais.toString(),
+      duree: course.duree.toString()
     });
     setIsEditDialogOpen(true);
   };
@@ -164,8 +214,8 @@ const Courses = () => {
                 </Label>
                 <Input
                   id="add-name"
-                  value={addForm.name}
-                  onChange={(e) => setAddForm({...addForm, name: e.target.value})}
+                  value={addForm.nom}
+                  onChange={(e) => setAddForm({...addForm, nom: e.target.value})}
                   className="col-span-3"
                   placeholder="Nom de la formation"
                 />
@@ -190,8 +240,8 @@ const Courses = () => {
                 <Input
                   id="add-fee"
                   type="number"
-                  value={addForm.fee}
-                  onChange={(e) => setAddForm({...addForm, fee: e.target.value})}
+                  value={addForm.frais}
+                  onChange={(e) => setAddForm({...addForm, frais: e.target.value})}
                   className="col-span-3"
                   placeholder="Prix en euros"
                 />
@@ -203,8 +253,8 @@ const Courses = () => {
                 <Input
                   id="add-duration"
                   type="number"
-                  value={addForm.duration}
-                  onChange={(e) => setAddForm({...addForm, duration: e.target.value})}
+                  value={addForm.duree}
+                  onChange={(e) => setAddForm({...addForm, duree: e.target.value})}
                   className="col-span-3"
                   placeholder="Ex: 90, 60..."
                 />
@@ -253,32 +303,40 @@ const Courses = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCourses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell className="font-medium">{course.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{course.description}</TableCell>
-                  <TableCell>{course.fee}€</TableCell>
-                  <TableCell>{course.duration}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(course)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteCourse(course.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    Chargement des formations...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredCourses.map((course) => (
+                  <TableRow key={course.id_formation}>
+                    <TableCell className="font-medium">{course.nom}</TableCell>
+                    <TableCell className="max-w-xs truncate">{course.description}</TableCell>
+                    <TableCell>{course.frais}€</TableCell>
+                    <TableCell>{course.duree}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(course)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteCourse(course.id_formation)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
           {filteredCourses.length === 0 && (
@@ -303,8 +361,8 @@ const Courses = () => {
               </Label>
               <Input
                 id="edit-name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                value={editForm.nom}
+                onChange={(e) => setEditForm({...editForm, nom: e.target.value})}
                 className="col-span-3"
               />
             </div>
@@ -327,8 +385,8 @@ const Courses = () => {
               <Input
                 id="edit-fee"
                 type="number"
-                value={editForm.fee}
-                onChange={(e) => setEditForm({...editForm, fee: e.target.value})}
+                value={editForm.frais}
+                onChange={(e) => setEditForm({...editForm, frais: e.target.value})}
                 className="col-span-3"
               />
             </div>
@@ -339,8 +397,8 @@ const Courses = () => {
               <Input
                 id="edit-duration"
                 type="number"
-                value={editForm.duration}
-                onChange={(e) => setEditForm({...editForm, duration: e.target.value})}
+                value={editForm.duree}
+                onChange={(e) => setEditForm({...editForm, duree: e.target.value})}
                 className="col-span-3"
               />
             </div>
