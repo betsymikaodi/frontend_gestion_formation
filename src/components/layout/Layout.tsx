@@ -42,6 +42,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         return t('dashboard');
       case '/students':
         return t('students');
+      case '/courses':
+        return 'Formations';
       case '/enrollments':
         return t('enrollments');
       case '/reports':
@@ -78,7 +80,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen flex w-full overflow-hidden">
       {/* Sidebar */}
       <div className="hidden lg:block">
-        <Sidebar isOpen={true} onClose={() => {}} />
+        <Sidebar isOpen={true} onClose={() => { }} />
       </div>
 
       {/* Mobile Sidebar */}
@@ -93,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Header */}
-        <Header 
+        <Header
           onMenuClick={() => setSidebarOpen(true)}
           title={getPageTitle()}
         />

@@ -40,6 +40,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       icon: Users,
       roles: ['admin'],
     },
+     {
+      name: 'Formations',
+      href: '/courses',
+      icon: BookOpen,
+      roles: ['admin'],
+    },
     {
       name: t('enrollments'),
       href: '/enrollments',

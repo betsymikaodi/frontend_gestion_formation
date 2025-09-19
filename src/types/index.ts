@@ -24,14 +24,13 @@ export interface Enrollment {
   createdAt: string;
 }
 
+
 export interface Course {
   id: string;
   name: string;
   description: string;
   fee: number;
-  duration: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
+  duration: number;
 }
 
 export interface Payment {
