@@ -12,16 +12,31 @@ export interface Student {
 }
 
 export interface Enrollment {
-  id: string;
-  studentId: string;
-  courseId: string;
-  courseName: string;
-  fee: number;
-  paymentStatus: 'paid' | 'pending' | 'overdue';
-  enrollmentDate: string;
-  dueDate: string;
+  // New API structure (optional for backward compatibility)
+  idInscription?: number;
+  dateInscription?: string;
+  statut?: 'En attente' | 'Confirmé' | 'Annulé';
+  droitInscription?: number;
+  paiements?: any[];
+  montantTotalPaye?: number;
+  montantRestant?: number;
+  
+  // Legacy fields for backward compatibility
+  id?: string;
+  studentId?: string;
+  courseId?: string;
+  courseName?: string;
+  fee?: number;
+  paymentStatus?: 'paid' | 'pending' | 'overdue';
+  enrollmentDate?: string;
+  dueDate?: string;
   paidDate?: string;
-  createdAt: string;
+  createdAt?: string;
+  
+  // Additional fields for UI
+  apprenantId?: number;
+  formationId?: number;
+  studentName?: string;
 }
 
 
