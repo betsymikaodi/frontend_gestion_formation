@@ -28,7 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Student, Enrollment, Course } from '@/types';
+import { Student, Course } from '@/types';
+import { Inscription, InscriptionsService, CreateInscriptionDto } from '@/services/inscriptions.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,7 +39,7 @@ const Enrollments: React.FC = () => {
   
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollments, setEnrollments] = useState<Inscription[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'En attente' | 'Confirmé' | 'Annulé'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -59,39 +60,31 @@ const Enrollments: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch enrollments from API
-      const enrollmentsResponse = await fetch('http://localhost:8080/api/inscriptions');
-      if (!enrollmentsResponse.ok) throw new Error('Erreur lors du chargement des inscriptions');
-      const enrollmentsData = await enrollmentsResponse.json();
+      // Utiliser le service pour récupérer les inscriptions
+      console.log('Chargement des inscriptions...');
+      const enrollmentsData = await InscriptionsService.getAll();
+      console.log('Inscriptions reçues:', enrollmentsData);
       
-      // Fetch students (assuming you have this API)
+      // Fetch students
+      console.log('Chargement des apprenants...');
       const studentsResponse = await fetch('http://localhost:8080/api/apprenants');
       const studentsData = studentsResponse.ok ? await studentsResponse.json() : [];
+      console.log('Apprenants reçus:', studentsData);
       
       // Fetch courses
-      const coursesResponse = await fetch('http://localhost:8080/formations');
+      console.log('Chargement des formations...');
+      const coursesResponse = await fetch('http://localhost:8080/api/formations');
       const coursesData = coursesResponse.ok ? await coursesResponse.json() : [];
+      console.log('Formations reçues:', coursesData);
       
-      // Enrich enrollments with student and course names
-      const enrichedEnrollments = enrollmentsData.map((enrollment: Enrollment) => {
-        const student = studentsData.find((s: any) => s.id === enrollment.apprenantId);
-        const course = coursesData.find((c: Course) => c.id_formation === enrollment.formationId);
-        
-        return {
-          ...enrollment,
-          studentName: student ? `${student.firstName || student.prenom || ''} ${student.lastName || student.nom || ''}` : 'Unknown',
-          courseName: course ? course.nom : 'Unknown Course'
-        };
-      });
-      
-      setEnrollments(enrichedEnrollments);
+      setEnrollments(enrollmentsData);
       setStudents(studentsData);
       setCourses(coursesData);
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Impossible de charger les données",
+        description: error.message || "Impossible de charger les données",
         variant: "destructive"
       });
     } finally {
@@ -110,19 +103,13 @@ const Enrollments: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/inscriptions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apprenantId: parseInt(addForm.apprenantId),
-          formationId: parseInt(addForm.formationId),
-          droitInscription: addForm.droitInscription ? parseFloat(addForm.droitInscription) : 0
-        }),
-      });
+      const enrollmentData: CreateInscriptionDto = {
+        apprenantId: parseInt(addForm.apprenantId),
+        formationId: parseInt(addForm.formationId),
+        droitInscription: addForm.droitInscription ? parseFloat(addForm.droitInscription) : undefined
+      };
 
-      if (!response.ok) throw new Error('Erreur lors de la création');
+      await InscriptionsService.create(enrollmentData);
 
       setAddForm({ apprenantId: '', formationId: '', droitInscription: '' });
       setIsAddDialogOpen(false);
@@ -132,10 +119,10 @@ const Enrollments: React.FC = () => {
         title: "Succès",
         description: "Inscription ajoutée avec succès"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter l'inscription",
+        description: error.message || "Impossible d'ajouter l'inscription",
         variant: "destructive"
       });
     }
@@ -143,38 +130,23 @@ const Enrollments: React.FC = () => {
 
   const updateEnrollmentStatus = async (enrollmentId: number, status: 'En attente' | 'Confirmé' | 'Annulé') => {
     try {
-      let endpoint = `http://localhost:8080/api/inscriptions/${enrollmentId}`;
-      let method = 'PUT';
-      let body = JSON.stringify({ statut: status });
-
-      // Use specific endpoints for confirm/cancel
       if (status === 'Confirmé') {
-        endpoint = `http://localhost:8080/api/inscriptions/${enrollmentId}/confirm`;
-        body = '';
+        await InscriptionsService.confirm(enrollmentId);
       } else if (status === 'Annulé') {
-        endpoint = `http://localhost:8080/api/inscriptions/${enrollmentId}/cancel`;
-        body = '';
+        await InscriptionsService.cancel(enrollmentId);
+      } else {
+        await InscriptionsService.update(enrollmentId, { statut: status });
       }
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: status !== 'Confirmé' && status !== 'Annulé' ? {
-          'Content-Type': 'application/json',
-        } : {},
-        body: body || undefined,
-      });
-
-      if (!response.ok) throw new Error('Erreur lors de la mise à jour');
 
       await loadData();
       toast({
         title: "Succès",
         description: `Statut mis à jour: ${status}`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
+        description: error.message || "Impossible de mettre à jour le statut",
         variant: "destructive"
       });
     }
@@ -182,21 +154,16 @@ const Enrollments: React.FC = () => {
 
   const handleDeleteEnrollment = async (enrollmentId: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/inscriptions/${enrollmentId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Erreur lors de la suppression');
-
+      await InscriptionsService.delete(enrollmentId);
       await loadData();
       toast({
         title: "Succès",
         description: "Inscription supprimée avec succès"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer l'inscription",
+        description: error.message || "Impossible de supprimer l'inscription",
         variant: "destructive"
       });
     }
@@ -204,13 +171,9 @@ const Enrollments: React.FC = () => {
 
   // Filter enrollments
   const filteredEnrollments = enrollments.filter(enrollment => {    
-    const matchesSearch = 
-      (enrollment.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (enrollment.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    
+    // Pour l'instant, on filtre juste sur le statut car nous n'avons pas encore les noms
     const matchesStatus = statusFilter === 'all' || enrollment.statut === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   // Calculate statistics
@@ -220,7 +183,7 @@ const Enrollments: React.FC = () => {
   const cancelledCount = enrollments.filter(e => e.statut === 'Annulé').length;
   const totalRevenue = enrollments
     .filter(e => e.statut === 'Confirmé')
-    .reduce((sum, e) => sum + e.montantTotalPaye, 0);
+    .reduce((sum, e) => sum + (e.montantTotalPaye || 0), 0);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -302,9 +265,15 @@ const Enrollments: React.FC = () => {
                 Ajouter Inscription
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent 
+              className="sm:max-w-[600px]"
+              description="Formulaire pour ajouter une nouvelle inscription"
+            >
               <DialogHeader>
                 <DialogTitle>Ajouter une nouvelle inscription</DialogTitle>
+                <p className="text-muted-foreground">
+                  Sélectionnez l'apprenant et la formation pour créer une nouvelle inscription
+                </p>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -317,8 +286,8 @@ const Enrollments: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {students.map((student) => (
-                        <SelectItem key={student.id} value={student.id.toString()}>
-                          {student.firstName} {student.lastName}
+                        <SelectItem key={student.idApprenant} value={student.idApprenant.toString()}>
+                          {student.prenom} {student.nom}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -334,7 +303,7 @@ const Enrollments: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {courses.map((course) => (
-                        <SelectItem key={course.id_formation} value={course.id_formation.toString()}>
+                        <SelectItem key={course.idFormation} value={course.idFormation.toString()}>
                           {course.nom} - {course.frais}€
                         </SelectItem>
                       ))}
@@ -472,12 +441,12 @@ const Enrollments: React.FC = () => {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center">
                               <span className="text-white font-medium">
-                                {enrollment.studentName?.split(' ').map(n => n[0]).join('') || 'U'}
+                                {enrollment.idInscription}
                               </span>
                             </div>
                             <div>
                               <p className="font-medium text-foreground">
-                                {enrollment.studentName || 'Unknown'}
+                                ID Inscription: {enrollment.idInscription}
                               </p>
                             </div>
                           </div>
@@ -486,7 +455,7 @@ const Enrollments: React.FC = () => {
                         <TableCell>
                           <div>
                             <p className="font-medium text-foreground">
-                              {enrollment.courseName || 'Unknown Course'}
+                              Inscription #{enrollment.idInscription}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               Inscrit le: {new Date(enrollment.dateInscription).toLocaleDateString()}

@@ -22,5 +22,16 @@ export const API_ROUTES = {
         stats: {
             moyennePrix: `${API_URL}/formations/stats/moyenne-prix`
         }
+    },
+    inscriptions: {
+        base: `${API_URL}/inscriptions`,
+        getAll: `${API_URL}/inscriptions`,
+        getById: (id: number) => `${API_URL}/inscriptions/${id}`,
+        create: `${API_URL}/inscriptions`,
+        update: (id: number) => `${API_URL}/inscriptions/${id}`,
+        delete: (id: number) => `${API_URL}/inscriptions/${id}`,
+        confirm: (id: number) => `${API_URL}/inscriptions/${id}/confirm`,
+        cancel: (id: number) => `${API_URL}/inscriptions/${id}/cancel`,
+        enroll: `${API_URL}/inscriptions/enroll`
     }
 };

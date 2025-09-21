@@ -1,14 +1,14 @@
 export interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
+  idApprenant: number;
+  nom: string;
+  prenom: string;
   email: string;
-  phone: string;
-  dateOfBirth: string;
-  address: string;
-  enrollmentDate: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
+  telephone: string;
+  dateNaissance: string;
+  adresse: string;
+  dateInscription: string;
+  status: string;
+  inscriptions?: Inscription[];
 }
 
 export interface Enrollment {
