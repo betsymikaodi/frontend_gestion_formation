@@ -33,5 +33,14 @@ export const API_ROUTES = {
         confirm: (id: number) => `${API_URL}/inscriptions/${id}/confirm`,
         cancel: (id: number) => `${API_URL}/inscriptions/${id}/cancel`,
         enroll: `${API_URL}/inscriptions/enroll`
+    },
+    paiements: {
+        base: `${API_URL}/paiements`,
+        getAll: `${API_URL}/paiements`,
+        getById: (id: number) => `${API_URL}/paiements/${id}`,
+        getByInscription: (inscriptionId: number) => `${API_URL}/paiements/inscription/${inscriptionId}`,
+        create: `${API_URL}/paiements`,
+        update: (id: number) => `${API_URL}/paiements/${id}`,
+        delete: (id: number) => `${API_URL}/paiements/${id}`
     }
 };

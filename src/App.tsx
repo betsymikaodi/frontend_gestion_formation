@@ -12,6 +12,7 @@ import Courses from "@/pages/Courses";
 import Enrollments from "@/pages/Enrollments";
 import Reports from "@/pages/Reports";
 import Profile from "@/pages/Profile";
+import Payments from "@/pages/Payments";
 import NotFound from "@/pages/NotFound";
 import "@/i18n";
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/students" element={<Layout><Students /></Layout>} />
             <Route path="/courses" element={<Layout><Courses /></Layout>} />
             <Route path="/enrollments" element={<Layout><Enrollments /></Layout>} />
+            <Route path="/payments" element={<Layout><Payments /></Layout>} />
             <Route path="/reports" element={<Layout><Reports /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="*" element={<NotFound />} />

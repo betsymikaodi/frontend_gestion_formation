@@ -11,7 +11,8 @@ import {
   LogOut,
   GraduationCap,
   Menu,
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       href: '/enrollments',
       icon: BookOpen,
       roles: ['admin', 'user'],
+    },
+    {
+      name: 'Paiements',
+      href: '/payments',
+      icon: CreditCard,
+      roles: ['admin'],
     },
     {
       name: t('reports'),
