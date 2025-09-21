@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, BookOpen } from 'lucide-react';
 import { Course } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { FormationsService } from '@/services/formations.service';
+import { formatAriary } from '@/lib/format';
 
 const Courses = () => {
   const { toast } = useToast();
@@ -237,7 +238,7 @@ const Courses = () => {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add-fee" className="text-right">
-                  Prix (€) *
+                  Prix (Ar) *
                 </Label>
                 <Input
                   id="add-fee"
@@ -245,7 +246,7 @@ const Courses = () => {
                   value={addForm.frais}
                   onChange={(e) => setAddForm({...addForm, frais: e.target.value})}
                   className="col-span-3"
-                  placeholder="Prix en euros"
+                  placeholder="Prix en Ariary"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -318,7 +319,7 @@ const Courses = () => {
                     <TableCell className="font-mono">{course.idFormation}</TableCell>
                     <TableCell className="font-medium">{course.nom}</TableCell>
                     <TableCell className="max-w-xs truncate">{course.description}</TableCell>
-                    <TableCell>{course.frais}€</TableCell>
+                    <TableCell>{formatAriary(course.frais)} Ar</TableCell>
                     <TableCell>{course.duree}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">

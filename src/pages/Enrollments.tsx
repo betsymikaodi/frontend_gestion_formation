@@ -32,6 +32,7 @@ import { Student, Course } from '@/types';
 import { Inscription, InscriptionsService, CreateInscriptionDto } from '@/services/inscriptions.service';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { formatAriary } from '@/lib/format';
 
 const Enrollments: React.FC = () => {
   const { t } = useTranslation();
@@ -222,7 +223,7 @@ const Enrollments: React.FC = () => {
     },
     {
       title: 'Revenus Totaux',
-      value: `${totalRevenue.toLocaleString()} €`,
+      value: `${formatAriary(totalRevenue)} Ar`,
       icon: DollarSign,
       color: 'gradient-accent',
     },
@@ -304,7 +305,7 @@ const Enrollments: React.FC = () => {
                     <SelectContent>
                       {courses.map((course) => (
                         <SelectItem key={course.idFormation} value={course.idFormation.toString()}>
-                          {course.nom} - {course.frais}€
+                          {course.nom} - {formatAriary(course.frais)} Ar
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -312,7 +313,7 @@ const Enrollments: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="fee" className="text-right">
-                    Droit d'inscription (€)
+                    Droit d'inscription (Ar)
                   </Label>
                   <Input
                     id="fee"
@@ -465,13 +466,13 @@ const Enrollments: React.FC = () => {
                         
                         <TableCell>
                           <p className="font-semibold text-foreground">
-                            {enrollment.droitInscription.toLocaleString()} €
+                            {formatAriary(enrollment.droitInscription)} Ar
                           </p>
                         </TableCell>
                         
                         <TableCell>
                           <p className="font-semibold text-success">
-                            {enrollment.montantTotalPaye.toLocaleString()} €
+                            {formatAriary(enrollment.montantTotalPaye)} Ar
                           </p>
                         </TableCell>
                         
@@ -480,7 +481,7 @@ const Enrollments: React.FC = () => {
                             "font-semibold",
                             enrollment.montantRestant > 0 ? "text-warning" : "text-success"
                           )}>
-                            {enrollment.montantRestant.toLocaleString()} €
+                            {formatAriary(enrollment.montantRestant)} Ar
                           </p>
                         </TableCell>
                         

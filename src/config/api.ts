@@ -6,8 +6,38 @@ export const API_HEADERS = {
     'Pragma': 'no-cache'
 };
 
+// Type des statistiques
+export interface Statistics {
+    totalFormations: number;
+    totalApprenants: number;
+    totalInscriptions: number;
+    totalRevenue: number;
+    moyennePrix: number;
+    tauxReussite: number;
+    inscriptionsParMois: {
+        mois: string;
+        nombre: number;
+    }[];
+    revenusParMois: {
+        mois: string;
+        montant: number;
+    }[];
+    formationsPopulaires: {
+        nom: string;
+        nombreInscrits: number;
+    }[];
+}
+
 // Routes de l'API
 export const API_ROUTES = {
+    stats: {
+        base: `${API_URL}/stats`,
+        dashboard: `${API_URL}/stats/dashboard`,
+        formations: `${API_URL}/stats/formations`,
+        inscriptions: `${API_URL}/stats/inscriptions`,
+        paiements: `${API_URL}/stats/paiements`,
+        activities: `${API_URL}/stats/activities`
+    },
     formations: {
         base: `${API_URL}/formations`,
         getAll: `${API_URL}/formations`,
@@ -17,6 +47,7 @@ export const API_ROUTES = {
         delete: (id: number) => `${API_URL}/formations/${id}`,
         search: {
             byPrix: `${API_URL}/formations/search/prix`,
+            byDuree: `${API_URL}/formations/search/duree`,
             populaires: `${API_URL}/formations/populaires`
         },
         stats: {

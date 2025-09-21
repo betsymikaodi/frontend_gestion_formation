@@ -8,6 +8,8 @@ import {
   TrendingUp,
   Calendar,
   AlertCircle,
+  GraduationCap,
+  BookCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,30 +25,47 @@ import {
   Cell,
   LineChart,
   Line,
+  Tooltip,
+  Legend,
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useAuth } from '@/contexts/AuthContext';
-import { Student, Enrollment } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { StatisticsService } from '@/services/statistics.service';
+import { formatAriary } from '@/lib/format';
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load data from localStorage
-    const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
-    const storedEnrollments = JSON.parse(localStorage.getItem('enrollments') || '[]');
-    
-    setStudents(storedStudents);
-    setEnrollments(storedEnrollments);
-
-    // Initialize sample data if none exists
-    if (storedStudents.length === 0) {
-      initializeSampleData();
-    }
+    loadDashboardData();
   }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [dashboardStats, activities] = await Promise.all([
+        StatisticsService.getDashboardStats(),
+        StatisticsService.getRecentActivities()
+      ]);
+      
+      setStats(dashboardStats);
+      setRecentActivities(activities);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de charger les données du tableau de bord",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const initializeSampleData = () => {
     const sampleStudents: Student[] = [
@@ -132,60 +151,57 @@ const Dashboard: React.FC = () => {
     setEnrollments(sampleEnrollments);
   };
 
-  // Calculate metrics
-  const totalStudents = students.length;
-  const totalEnrollments = enrollments.length;
-  const pendingPayments = enrollments.filter(e => e.paymentStatus === 'pending' || e.paymentStatus === 'overdue').length;
-  const totalRevenue = enrollments
-    .filter(e => e.paymentStatus === 'paid')
-    .reduce((sum, e) => sum + e.fee, 0);
-
   // Chart data
-  const monthlyData = [
-    { month: 'Jan', enrollments: 12, revenue: 30000 },
-    { month: 'Feb', enrollments: 19, revenue: 47500 },
-    { month: 'Mar', enrollments: 8, revenue: 20000 },
-    { month: 'Apr', enrollments: 15, revenue: 37500 },
-    { month: 'May', enrollments: 22, revenue: 55000 },
-    { month: 'Jun', enrollments: 18, revenue: 45000 },
-  ];
+  const monthlyData = stats?.inscriptionsParMois?.map((data: any) => ({
+    mois: data.mois,
+    inscriptions: data.nombre,
+    revenus: data.montant
+  })) || [];
 
   const paymentStatusData = [
-    { name: 'Paid', value: enrollments.filter(e => e.paymentStatus === 'paid').length, color: 'hsl(142 76% 36%)' },
-    { name: 'Pending', value: enrollments.filter(e => e.paymentStatus === 'pending').length, color: 'hsl(38 92% 50%)' },
-    { name: 'Overdue', value: enrollments.filter(e => e.paymentStatus === 'overdue').length, color: 'hsl(0 84% 60%)' },
+    { 
+      name: 'Confirmé',
+      value: stats?.inscriptionsConfirmees || 0,
+      color: 'hsl(142 76% 36%)'
+    },
+    { 
+      name: 'En attente',
+      value: stats?.inscriptionsEnAttente || 0,
+      color: 'hsl(38 92% 50%)'
+    },
+    { 
+      name: 'Annulé',
+      value: stats?.inscriptionsAnnulees || 0,
+      color: 'hsl(0 84% 60%)'
+    }
   ];
 
-  const statsCards = [
+  const statsCards = stats ? [
     {
-      title: t('totalStudents'),
-      value: totalStudents.toString(),
+      title: "Apprenants",
+      value: stats.totalApprenants.toString(),
       icon: Users,
-      gradient: 'gradient-primary',
-      change: '+12%',
+      gradient: 'gradient-primary'
     },
     {
-      title: t('totalEnrollments'),
-      value: totalEnrollments.toString(),
-      icon: BookOpen,
-      gradient: 'gradient-accent',
-      change: '+8%',
+      title: "Formations",
+      value: stats.totalFormations.toString(),
+      icon: GraduationCap,
+      gradient: 'bg-violet-500'
     },
     {
-      title: t('pendingPayments'),
-      value: pendingPayments.toString(),
-      icon: AlertCircle,
-      gradient: 'bg-warning',
-      change: '-3%',
+      title: "Inscriptions",
+      value: stats.totalInscriptions.toString(),
+      icon: BookCheck,
+      gradient: 'gradient-accent'
     },
     {
-      title: t('totalRevenue'),
-      value: `$${totalRevenue.toLocaleString()}`,
+      title: "Revenus Totaux",
+      value: formatAriary(stats.totalRevenue) + " Ar",
       icon: DollarSign,
-      gradient: 'bg-success',
-      change: '+15%',
+      gradient: 'bg-success'
     },
-  ];
+  ] : [];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -279,25 +295,34 @@ const Dashboard: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  enrollments: {
-                    label: "Enrollments",
-                    color: "hsl(var(--primary))",
-                  },
-                }}
-                className="h-[300px]"
-              >
+              <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="month" />
+                    <XAxis dataKey="mois" />
                     <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="enrollments" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Tooltip
+                      formatter={(value: any) => [
+                        value.toString(),
+                        value.toString().includes("Ar") ? "Revenus" : "Inscriptions"
+                      ]}
+                    />
+                    <Legend />
+                    <Bar 
+                      name="Inscriptions" 
+                      dataKey="inscriptions" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]} 
+                    />
+                    <Bar 
+                      name="Revenus" 
+                      dataKey="revenus" 
+                      fill="hsl(var(--success))" 
+                      radius={[4, 4, 0, 0]} 
+                    />
                   </BarChart>
                 </ResponsiveContainer>
-              </ChartContainer>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -377,38 +402,42 @@ const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {enrollments.slice(0, 3).map((enrollment) => {
-                const student = students.find(s => s.id === enrollment.studentId);
-                return (
-                  <div key={enrollment.id} className="flex items-center justify-between p-4 glass rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {student?.firstName} {student?.lastName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {enrollment.courseName}
-                        </p>
-                      </div>
+              {recentActivities.map((activity: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-4 glass rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-white" />
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">
-                        ${enrollment.fee.toLocaleString()}
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {activity.description}
                       </p>
-                      <p className={`text-sm ${
-                        enrollment.paymentStatus === 'paid' ? 'text-success' :
-                        enrollment.paymentStatus === 'pending' ? 'text-warning' :
-                        'text-destructive'
-                      }`}>
-                        {enrollment.paymentStatus}
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(activity.date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                );
-              })}
+                  {activity.montant && (
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatAriary(activity.montant)} Ar
+                      </p>
+                      <p className={`text-sm ${
+                        activity.type === 'paiement' ? 'text-success' :
+                        activity.type === 'inscription' ? 'text-warning' :
+                        'text-info'
+                      }`}>
+                        {activity.type}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {recentActivities.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aucune activité récente
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

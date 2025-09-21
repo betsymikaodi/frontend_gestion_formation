@@ -40,6 +40,15 @@ import { useToast } from '@/hooks/use-toast';
 import { PaiementsService, Paiement, CreatePaiementDto } from '@/services/paiements.service';
 import { InscriptionsService } from '@/services/inscriptions.service';
 
+// Fonction pour formater les montants en Ariary
+const formatAriary = (amount: number) => {
+  return new Intl.NumberFormat('fr-MG', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 const Payments = () => {
   const { toast } = useToast();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
@@ -48,12 +57,14 @@ const Payments = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const [addForm, setAddForm] = useState<CreatePaiementDto>({
+  const initialAddForm: CreatePaiementDto = {
     inscriptionId: 0,
     montant: 0,
     modePaiement: '',
     module: ''
-  });
+  };
+
+  const [addForm, setAddForm] = useState<CreatePaiementDto>(initialAddForm);
 
   const [editForm, setEditForm] = useState<Paiement>({
     idPaiement: 0,
@@ -101,12 +112,7 @@ const Payments = () => {
 
       await PaiementsService.create(addForm);
       setIsAddDialogOpen(false);
-      setAddForm({
-        inscriptionId: 0,
-        montant: 0,
-        modePaiement: '',
-        module: ''
-      });
+      setAddForm(initialAddForm);
       await loadData();
       
       toast({
@@ -226,24 +232,37 @@ const Payments = () => {
                   <Label htmlFor="inscription-select" className="text-right">
                     Inscription *
                   </Label>
-                  <Select
-                    value={addForm.inscriptionId.toString()}
-                    onValueChange={(value) => setAddForm({...addForm, inscriptionId: parseInt(value)})}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner une inscription" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {inscriptions.map((inscription) => (
-                        <SelectItem 
-                          key={inscription.idInscription} 
-                          value={inscription.idInscription.toString()}
-                        >
-                          Inscription #{inscription.idInscription}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="col-span-3">
+                    {addForm.inscriptionId > 0 && (
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Inscription sélectionnée : #{addForm.inscriptionId}
+                      </div>
+                    )}
+                    <Select
+                      value={addForm.inscriptionId > 0 ? addForm.inscriptionId.toString() : undefined}
+                      onValueChange={(value) => setAddForm({...addForm, inscriptionId: parseInt(value)})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une inscription" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {inscriptions.map((inscription) => {
+                          const selectedInscription = inscription.idInscription === addForm.inscriptionId;
+                          return (
+                            <SelectItem 
+                              key={inscription.idInscription} 
+                              value={inscription.idInscription.toString()}
+                            >
+                              {selectedInscription ? 
+                                `Inscription #${inscription.idInscription} (Sélectionnée)` :
+                                `Inscription #${inscription.idInscription}`
+                              }
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -256,7 +275,7 @@ const Payments = () => {
                     value={addForm.montant}
                     onChange={(e) => setAddForm({...addForm, montant: parseFloat(e.target.value)})}
                     className="col-span-3"
-                    placeholder="0.00"
+                    placeholder="0 Ar"
                   />
                 </div>
 
@@ -284,13 +303,20 @@ const Payments = () => {
                   <Label htmlFor="payment-module" className="text-right">
                     Module *
                   </Label>
-                  <Input
-                    id="payment-module"
+                  <Select
                     value={addForm.module}
-                    onChange={(e) => setAddForm({...addForm, module: e.target.value})}
-                    className="col-span-3"
-                    placeholder="Ex: Module 1"
-                  />
+                    onValueChange={(value) => setAddForm({...addForm, module: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Sélectionner un module" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Module 1">Module 1</SelectItem>
+                      <SelectItem value="Module 2">Module 2</SelectItem>
+                      <SelectItem value="Module 3">Module 3</SelectItem>
+                      <SelectItem value="Module 4">Module 4</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -319,7 +345,7 @@ const Payments = () => {
                     Total des Paiements
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-2">
-                    {totalPayments.toLocaleString()} €
+                    {formatAriary(totalPayments)} Ar
                   </p>
                 </div>
                 <div className="gradient-primary w-12 h-12 rounded-xl flex items-center justify-center">
@@ -343,7 +369,7 @@ const Payments = () => {
                     Paiements du Jour
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-2">
-                    {totalPaymentsToday.toLocaleString()} €
+                    {formatAriary(totalPaymentsToday)} Ar
                   </p>
                 </div>
                 <div className="bg-success w-12 h-12 rounded-xl flex items-center justify-center">
@@ -433,7 +459,7 @@ const Payments = () => {
                           {new Date(paiement.datePaiement).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="font-semibold text-success">
-                          {paiement.montant.toLocaleString()} €
+                          {formatAriary(paiement.montant)} Ar
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -486,24 +512,38 @@ const Payments = () => {
               <Label htmlFor="edit-inscription-select" className="text-right">
                 Inscription *
               </Label>
-              <Select
-                value={editForm.inscriptionId.toString()}
-                onValueChange={(value) => setEditForm({...editForm, inscriptionId: parseInt(value)})}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner une inscription" />
-                </SelectTrigger>
-                <SelectContent>
-                  {inscriptions.map((inscription) => (
+              <div className="col-span-3">
+                <div className="text-sm text-muted-foreground mb-2">
+                  Inscription actuelle : #{editForm.inscriptionId}
+                </div>
+                <Select
+                  value={editForm.inscriptionId.toString()}
+                  onValueChange={(value) => setEditForm({...editForm, inscriptionId: parseInt(value)})}
+                  defaultValue={editForm.inscriptionId.toString()}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
                     <SelectItem 
-                      key={inscription.idInscription} 
-                      value={inscription.idInscription.toString()}
+                      key={editForm.inscriptionId} 
+                      value={editForm.inscriptionId.toString()}
                     >
-                      Inscription #{inscription.idInscription}
+                      Inscription #{editForm.inscriptionId} (Actuelle)
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    {inscriptions
+                      .filter(inscription => inscription.idInscription !== editForm.inscriptionId)
+                      .map((inscription) => (
+                        <SelectItem 
+                          key={inscription.idInscription} 
+                          value={inscription.idInscription.toString()}
+                        >
+                          Inscription #{inscription.idInscription}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -516,7 +556,7 @@ const Payments = () => {
                 value={editForm.montant}
                 onChange={(e) => setEditForm({...editForm, montant: parseFloat(e.target.value)})}
                 className="col-span-3"
-                placeholder="0.00"
+                placeholder="0 Ar"
               />
             </div>
 
@@ -544,13 +584,20 @@ const Payments = () => {
               <Label htmlFor="edit-payment-module" className="text-right">
                 Module *
               </Label>
-              <Input
-                id="edit-payment-module"
+              <Select
                 value={editForm.module}
-                onChange={(e) => setEditForm({...editForm, module: e.target.value})}
-                className="col-span-3"
-                placeholder="Ex: Module 1"
-              />
+                onValueChange={(value) => setEditForm({...editForm, module: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Sélectionner un module" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Module 1">Module 1</SelectItem>
+                  <SelectItem value="Module 2">Module 2</SelectItem>
+                  <SelectItem value="Module 3">Module 3</SelectItem>
+                  <SelectItem value="Module 4">Module 4</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
