@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Edit, Trash2, BookOpen } from 'lucide-react';
 import { Course } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { FormationsService } from '@/services/formations.service';
 
 const Courses = () => {
   const { toast } = useToast();
@@ -46,9 +47,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8080/api/formations');
-      if (!response.ok) throw new Error('Erreur lors du chargement');
-      const data = await response.json();
+      const data = await FormationsService.getAll();
       setCourses(data);
     } catch (error) {
       toast({
@@ -77,20 +76,12 @@ const Courses = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/formations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nom: addForm.nom,
-          description: addForm.description,
-          frais: parseFloat(addForm.frais),
-          duree: parseInt(addForm.duree)
-        }),
+      await FormationsService.create({
+        nom: addForm.nom,
+        description: addForm.description,
+        frais: parseFloat(addForm.frais),
+        duree: parseInt(addForm.duree)
       });
-
-      if (!response.ok) throw new Error('Erreur lors de la création');
 
       setAddForm({ nom: '', description: '', frais: '', duree: '' });
       setIsAddDialogOpen(false);
@@ -119,23 +110,25 @@ const Courses = () => {
       return;
     }
 
-    if (!editingCourse) return;
+    if (!editingCourse) {
+      console.error('Pas de formation en cours d\'édition');
+      return;
+    }
+
+    const updateData = {
+      nom: editForm.nom,
+      description: editForm.description,
+      frais: parseFloat(editForm.frais),
+      duree: parseInt(editForm.duree)
+    };
 
     try {
-      const response = await fetch(`http://localhost:8080/api/formations/${editingCourse.id_formation}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nom: editForm.nom,
-          description: editForm.description,
-          frais: parseFloat(editForm.frais),
-          duree: parseInt(editForm.duree)
-        }),
+      console.log('Mise à jour de la formation:', {
+        id: editingCourse.id_formation,
+        data: updateData
       });
 
-      if (!response.ok) throw new Error('Erreur lors de la modification');
+      await FormationsService.update(editingCourse.idFormation, updateData);
 
       setIsEditDialogOpen(false);
       setEditingCourse(null);
@@ -145,32 +138,40 @@ const Courses = () => {
         title: "Succès",
         description: "Formation mise à jour avec succès"
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier la formation",
+        description: error.message || "Impossible de modifier la formation",
         variant: "destructive"
       });
     }
   };
 
-  const handleDeleteCourse = async (courseId: number) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/formations/${courseId}`, {
-        method: 'DELETE'
+  const handleDeleteCourse = async (idFormation: number) => {
+    if (!idFormation || isNaN(idFormation)) {
+      console.error('ID de formation invalide:', idFormation);
+      toast({
+        title: "Erreur",
+        description: "ID de formation invalide",
+        variant: "destructive"
       });
+      return;
+    }
 
-      if (!response.ok) throw new Error('Erreur lors de la suppression');
-
+    try {
+      console.log('Suppression de la formation avec ID:', idFormation);
+      await FormationsService.delete(idFormation);
       await fetchCourses();
       toast({
         title: "Succès",
         description: "Formation supprimée avec succès"
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer la formation",
+        description: error.message || "Impossible de supprimer la formation",
         variant: "destructive"
       });
     }
@@ -203,9 +204,10 @@ const Courses = () => {
               Ajouter Formation
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px]" description="Formulaire d'ajout d'une nouvelle formation">
             <DialogHeader>
               <DialogTitle>Ajouter une nouvelle formation</DialogTitle>
+              <p className="text-muted-foreground">Remplissez les informations pour créer une nouvelle formation.</p>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -295,6 +297,7 @@ const Courses = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-20">ID</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Prix</TableHead>
@@ -305,13 +308,14 @@ const Courses = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     Chargement des formations...
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredCourses.map((course) => (
-                  <TableRow key={course.id_formation}>
+                  <TableRow key={course.idFormation}>
+                    <TableCell className="font-mono">{course.idFormation}</TableCell>
                     <TableCell className="font-medium">{course.nom}</TableCell>
                     <TableCell className="max-w-xs truncate">{course.description}</TableCell>
                     <TableCell>{course.frais}€</TableCell>
@@ -328,7 +332,7 @@ const Courses = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteCourse(course.id_formation)}
+                          onClick={() => handleDeleteCourse(course.idFormation)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -350,9 +354,10 @@ const Courses = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px]" description="Formulaire de modification d'une formation">
           <DialogHeader>
             <DialogTitle>Modifier la formation</DialogTitle>
+            <p className="text-muted-foreground">Modifiez les informations de la formation sélectionnée.</p>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -415,4 +420,5 @@ const Courses = () => {
   );
 };
 
-export default Courses;
+const CoursesPage = Courses;
+export default CoursesPage;

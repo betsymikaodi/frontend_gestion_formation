@@ -25,12 +25,30 @@ export interface Enrollment {
 }
 
 
+export interface Inscription {
+  idInscription: number;
+  dateInscription: string;
+  statut: string;
+  droitInscription: number;
+  paiements: {
+    idPaiement: number;
+    datePaiement: string;
+    montant: number;
+    modePaiement: string;
+    module: string;
+  }[];
+  montantTotalPaye: number;
+  montantRestant: number;
+}
+
 export interface Course {
-  id: string;
-  name: string;
+  idFormation: number;
+  nom: string;
   description: string;
-  fee: number;
-  duration: number;
+  frais: number;
+  duree: number;
+  inscriptions: Inscription[];
+  nombreInscrits: number;
 }
 
 export interface Payment {
