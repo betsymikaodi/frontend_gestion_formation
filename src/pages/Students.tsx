@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAuthToken } from '@/config/api';
 import {
   Plus,
   Search,
@@ -80,12 +81,15 @@ const apiService = {
   },
 
   async create(apprenant: Omit<Apprenant, 'idApprenant'>): Promise<Apprenant> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/apprenants`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers,
       body: JSON.stringify(apprenant),
     });
     if (!response.ok) {
@@ -96,12 +100,15 @@ const apiService = {
   },
 
   async update(id: number, apprenant: Apprenant): Promise<Apprenant> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/apprenants/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers,
       body: JSON.stringify(apprenant),
     });
     if (!response.ok) {
@@ -112,14 +119,18 @@ const apiService = {
   },
 
   async delete(id: number): Promise<void> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(`${API_BASE_URL}/apprenants/${id}`, {
       method: 'DELETE',
+      headers,
     });
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur lors de la suppression: ${errorText}`);
     }
-  },
+  }
 };
 
 // Composant StudentForm séparé pour éviter les re-renders

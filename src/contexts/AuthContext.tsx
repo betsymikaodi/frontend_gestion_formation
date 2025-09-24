@@ -34,7 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Pas de persistance localStorage: session en mémoire uniquement
+    // Restaure la session depuis le localStorage si disponible
+    const storedUser = localStorage.getItem('currentUser');
+    const storedToken = localStorage.getItem('token');
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser));
+      setAuthToken(storedToken);
+    }
     setIsLoading(false);
   }, []);
 
@@ -54,6 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: roleRaw.toLowerCase() == 'admin' ? 'admin' : 'user',
       };
       setUser(loggedUser);
+      localStorage.setItem('currentUser', JSON.stringify(loggedUser));
+      localStorage.setItem('token', token);
       return true;
     } catch {
       return false;
@@ -61,8 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    setUser(null);
-    setAuthToken(null);
+  setUser(null);
+  setAuthToken(null);
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('token');
   };
 
   const createAccount = async (userData: Omit<User, 'id' | 'createdAt'> & { password: string }): Promise<boolean> => {

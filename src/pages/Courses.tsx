@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2, BookOpen } from 'lucide-react';
-import { Course } from '@/types';
+import { Course } from '@/types/index';
 import { useToast } from '@/hooks/use-toast';
 import { FormationsService } from '@/services/formations.service';
 import { formatAriary } from '@/lib/format';
@@ -205,7 +205,7 @@ const Courses = () => {
               Ajouter Formation
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]" description="Formulaire d'ajout d'une nouvelle formation">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Ajouter une nouvelle formation</DialogTitle>
               <p className="text-muted-foreground">Remplissez les informations pour créer une nouvelle formation.</p>
@@ -355,7 +355,7 @@ const Courses = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]" description="Formulaire de modification d'une formation">
+  <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Modifier la formation</DialogTitle>
             <p className="text-muted-foreground">Modifiez les informations de la formation sélectionnée.</p>
