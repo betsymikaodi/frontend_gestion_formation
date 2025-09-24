@@ -41,8 +41,8 @@ const Profile: React.FC = () => {
     // Validate form
     if (!formData.firstName || !formData.lastName || !formData.email) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: t("error"),
+        description: t("fillAllFields"),
         variant: "destructive",
       });
       return;
@@ -50,8 +50,8 @@ const Profile: React.FC = () => {
 
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       toast({
-        title: "Error",
-        description: "New passwords do not match",
+        title: t("error"),
+        description: t("passwordsDoNotMatch"),
         variant: "destructive",
       });
       return;
@@ -78,8 +78,8 @@ const Profile: React.FC = () => {
       localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
       
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: t("success"),
+        description: t("profileUpdatedSuccess"),
       });
       
       setIsEditing(false);
@@ -173,7 +173,7 @@ const Profile: React.FC = () => {
               {t('profile')}
             </h1>
             <p className="text-muted-foreground">
-              Manage your account settings and preferences
+              {t('manageAccount')}
             </p>
           </div>
           
@@ -181,7 +181,7 @@ const Profile: React.FC = () => {
             {!isEditing ? (
               <Button onClick={() => setIsEditing(true)} className="gradient-primary text-white">
                 <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+                {t('editProfile')}
               </Button>
             ) : (
               <div className="flex gap-2">
@@ -223,7 +223,7 @@ const Profile: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Role</span>
+                  <span className="text-sm text-muted-foreground">{t('role')}</span>
                   <Badge
                     variant={user?.role === 'admin' ? 'default' : 'secondary'}
                     className={cn(
@@ -237,7 +237,7 @@ const Profile: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <span className="text-sm text-muted-foreground">{t('memberSince')}</span>
                   <span className="text-sm text-foreground">
                     {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                   </span>
@@ -258,10 +258,10 @@ const Profile: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Personal Information
+                {t('personalInformation')}
               </CardTitle>
               <CardDescription>
-                Update your personal details and contact information
+                {t('updatePersonalInfo')}
               </CardDescription>
             </CardHeader>
             
@@ -304,17 +304,17 @@ const Profile: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
-                Change Password
+                {t('changePassword')}
               </CardTitle>
               <CardDescription>
-                Leave password fields empty if you don't want to change your password
+                {t('passwordChangeInfo')}
               </CardDescription>
             </CardHeader>
             
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <ProfileField
-                  label="Current Password"
+                  label={t('currentPassword')}
                   value={formData.currentPassword}
                   name="currentPassword"
                   type="password"
@@ -323,7 +323,7 @@ const Profile: React.FC = () => {
                 />
                 
                 <ProfileField
-                  label="New Password"
+                  label={t('newPassword')}
                   value={formData.newPassword}
                   name="newPassword"
                   type="password"
@@ -332,7 +332,7 @@ const Profile: React.FC = () => {
                 />
                 
                 <ProfileField
-                  label="Confirm New Password"
+                  label={t('confirmNewPassword')}
                   value={formData.confirmPassword}
                   name="confirmPassword"
                   type="password"
@@ -351,9 +351,9 @@ const Profile: React.FC = () => {
       >
         <Card className="glass-card border-border/30">
           <CardHeader>
-            <CardTitle>Account Activity</CardTitle>
+            <CardTitle>{t('accountActivity')}</CardTitle>
             <CardDescription>
-              Overview of your recent activity
+              {t('activityOverview')}
             </CardDescription>
           </CardHeader>
           
@@ -361,19 +361,19 @@ const Profile: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-4 glass rounded-xl">
                 <div className="text-2xl font-bold text-primary mb-1">0</div>
-                <div className="text-sm text-muted-foreground">Login Sessions</div>
+                <div className="text-sm text-muted-foreground">{t('loginSessions')}</div>
               </div>
               
               <div className="text-center p-4 glass rounded-xl">
                 <div className="text-2xl font-bold text-success mb-1">
-                  {user?.role === 'admin' ? 'All' : '0'}
+                  {user?.role === 'admin' ? t('all') : '0'}
                 </div>
-                <div className="text-sm text-muted-foreground">Accessible Students</div>
+                <div className="text-sm text-muted-foreground">{t('accessibleStudents')}</div>
               </div>
               
               <div className="text-center p-4 glass rounded-xl">
                 <div className="text-2xl font-bold text-warning mb-1">0</div>
-                <div className="text-sm text-muted-foreground">Recent Actions</div>
+                <div className="text-sm text-muted-foreground">{t('recentActions')}</div>
               </div>
             </div>
           </CardContent>

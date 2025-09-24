@@ -84,8 +84,8 @@ const Enrollments: React.FC = () => {
       
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de charger les données",
+        title: t('error'),
+        description: error.message || t('cannotLoadData'),
         variant: "destructive"
       });
     } finally {
@@ -96,8 +96,8 @@ const Enrollments: React.FC = () => {
   const handleAddEnrollment = async () => {
     if (!addForm.apprenantId || !addForm.formationId) {
       toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un apprenant et une formation",
+        title: t('error'),
+        description: t('selectStudentAndCourseError'),
         variant: "destructive"
       });
       return;
@@ -117,13 +117,13 @@ const Enrollments: React.FC = () => {
       await loadData();
       
       toast({
-        title: "Succès",
-        description: "Inscription ajoutée avec succès"
+        title: t('success'),
+        description: t('enrollmentAddedSuccess')
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible d'ajouter l'inscription",
+        title: t('error'),
+        description: error.message || t('cannotAddEnrollment'),
         variant: "destructive"
       });
     }
@@ -141,13 +141,13 @@ const Enrollments: React.FC = () => {
 
       await loadData();
       toast({
-        title: "Succès",
-        description: `Statut mis à jour: ${status}`
+        title: t('success'),
+        description: `${t('statusUpdated')}: ${status}`
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de mettre à jour le statut",
+        title: t('error'),
+        description: error.message || t('cannotUpdateStatus'),
         variant: "destructive"
       });
     }
@@ -158,13 +158,13 @@ const Enrollments: React.FC = () => {
       await InscriptionsService.delete(enrollmentId);
       await loadData();
       toast({
-        title: "Succès",
-        description: "Inscription supprimée avec succès"
+        title: t('success'),
+        description: t('enrollmentDeletedSuccess')
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de supprimer l'inscription",
+        title: t('error'),
+        description: error.message || t('cannotDeleteEnrollment'),
         variant: "destructive"
       });
     }
@@ -209,32 +209,32 @@ const Enrollments: React.FC = () => {
     return (
       <Badge className={cn('flex items-center gap-1', variants[status as keyof typeof variants])}>
         {getStatusIcon(status)}
-        {status}
+        {t(status.toLowerCase().replace(' ', ''))}
       </Badge>
     );
   };
 
   const statsCards = [
     {
-      title: 'Total des Inscriptions',
+      title: t('totalEnrollmentsTitle'),
       value: totalEnrollments.toString(),
       icon: BookOpen,
       color: 'gradient-primary',
     },
     {
-      title: 'Revenus Totaux',
+      title: t('totalRevenueTitle'),
       value: `${formatAriary(totalRevenue)} Ar`,
       icon: DollarSign,
       color: 'gradient-accent',
     },
     {
-      title: 'Confirmées',
+      title: t('confirmed'),
       value: confirmedCount.toString(),
       icon: CheckCircle,
       color: 'bg-success',
     },
     {
-      title: 'En Attente + Annulées',
+      title: t('pendingAndCancelled'),
       value: (pendingCount + cancelledCount).toString(),
       icon: AlertCircle,
       color: 'bg-warning',
@@ -252,10 +252,10 @@ const Enrollments: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Gestion des Inscriptions
+              {t('enrollmentManagement')}
             </h1>
             <p className="text-muted-foreground">
-              Suivez les inscriptions des étudiants et gérez les paiements
+              {t('trackEnrollments')}
             </p>
           </div>
           
@@ -263,27 +263,27 @@ const Enrollments: React.FC = () => {
             <DialogTrigger asChild>
               <Button className="gradient-primary text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Ajouter Inscription
+                {t('addEnrollment')}
               </Button>
             </DialogTrigger>
             <DialogContent 
               className="sm:max-w-[600px]"
-              description="Formulaire pour ajouter une nouvelle inscription"
+              description={t('addNewEnrollment')}
             >
               <DialogHeader>
-                <DialogTitle>Ajouter une nouvelle inscription</DialogTitle>
+                <DialogTitle>{t('addNewEnrollment')}</DialogTitle>
                 <p className="text-muted-foreground">
-                  Sélectionnez l'apprenant et la formation pour créer une nouvelle inscription
+                  {t('selectStudentAndCourse')}
                 </p>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="student-select" className="text-right">
-                    Apprenant *
+                    {t('student')} *
                   </Label>
                   <Select value={addForm.apprenantId} onValueChange={(value) => setAddForm({...addForm, apprenantId: value})}>
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner un apprenant" />
+                      <SelectValue placeholder={t('selectStudent')} />
                     </SelectTrigger>
                     <SelectContent>
                       {students.map((student) => (
@@ -296,11 +296,11 @@ const Enrollments: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="course-select" className="text-right">
-                    Formation *
+                    {t('course')} *
                   </Label>
                   <Select value={addForm.formationId} onValueChange={(value) => setAddForm({...addForm, formationId: value})}>
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner une formation" />
+                      <SelectValue placeholder={t('selectCourse')} />
                     </SelectTrigger>
                     <SelectContent>
                       {courses.map((course) => (
@@ -313,7 +313,7 @@ const Enrollments: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="fee" className="text-right">
-                    Droit d'inscription (Ar)
+                    {t('registrationFee')}
                   </Label>
                   <Input
                     id="fee"
@@ -327,9 +327,9 @@ const Enrollments: React.FC = () => {
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Annuler
+                  {t('cancel')}
                 </Button>
-                <Button onClick={handleAddEnrollment}>Ajouter</Button>
+                <Button onClick={handleAddEnrollment}>{t('add')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -377,9 +377,9 @@ const Enrollments: React.FC = () => {
       >
         <Card className="glass-card border-border/30">
           <CardHeader>
-            <CardTitle>Gestion des Inscriptions</CardTitle>
+            <CardTitle>{t('enrollmentList')}</CardTitle>
             <CardDescription>
-              Gérez les inscriptions des étudiants et leurs statuts de paiement
+              {t('manageEnrollmentsAndPayments')}
             </CardDescription>
           </CardHeader>
           
@@ -387,7 +387,7 @@ const Enrollments: React.FC = () => {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <Input
-                placeholder="Rechercher par apprenant ou formation..."
+                placeholder={t('searchByStudentOrCourse')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 glass border-border/30"
@@ -402,10 +402,10 @@ const Enrollments: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="glass-card">
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="En attente">En attente</SelectItem>
-                  <SelectItem value="Confirmé">Confirmé</SelectItem>
-                  <SelectItem value="Annulé">Annulé</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="En attente">{t('pending')}</SelectItem>
+                  <SelectItem value="Confirmé">{t('confirmed')}</SelectItem>
+                  <SelectItem value="Annulé">{t('inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -415,21 +415,21 @@ const Enrollments: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30">
-                    <TableHead className="text-foreground font-semibold">Apprenant</TableHead>
-                    <TableHead className="text-foreground font-semibold">Formation</TableHead>
-                    <TableHead className="text-foreground font-semibold">Droit d'inscription</TableHead>
-                    <TableHead className="text-foreground font-semibold">Montant payé</TableHead>
-                    <TableHead className="text-foreground font-semibold">Montant restant</TableHead>
-                    <TableHead className="text-foreground font-semibold">Statut</TableHead>
-                    <TableHead className="text-foreground font-semibold">Date</TableHead>
-                    <TableHead className="text-foreground font-semibold">Actions</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('studentColumn')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('courseColumn')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('registrationFeeColumn')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('amountPaid')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('amountRemaining')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('status')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('date')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8">
-                        Chargement des inscriptions...
+                        {t('loading')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -447,7 +447,7 @@ const Enrollments: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-medium text-foreground">
-                                ID Inscription: {enrollment.idInscription}
+                                {t('enrollmentId')}: {enrollment.idInscription}
                               </p>
                             </div>
                           </div>
@@ -456,10 +456,10 @@ const Enrollments: React.FC = () => {
                         <TableCell>
                           <div>
                             <p className="font-medium text-foreground">
-                              Inscription #{enrollment.idInscription}
+                              {t('enrollment')} #{enrollment.idInscription}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Inscrit le: {new Date(enrollment.dateInscription).toLocaleDateString()}
+                              {t('enrolledOn')}: {new Date(enrollment.dateInscription).toLocaleDateString()}
                             </p>
                           </div>
                         </TableCell>
@@ -504,7 +504,7 @@ const Enrollments: React.FC = () => {
                                   onClick={() => updateEnrollmentStatus(enrollment.idInscription, 'Confirmé')}
                                   className="bg-success text-success-foreground hover:bg-success/90"
                                 >
-                                  Confirmer
+                                  {t('confirm')}
                                 </Button>
                                 <Button
                                   size="sm"
@@ -512,7 +512,7 @@ const Enrollments: React.FC = () => {
                                   onClick={() => updateEnrollmentStatus(enrollment.idInscription, 'Annulé')}
                                   className="border-destructive text-destructive hover:bg-destructive/10"
                                 >
-                                  Annuler
+                                  {t('cancelEnrollment')}
                                 </Button>
                               </>
                             )}
@@ -524,7 +524,7 @@ const Enrollments: React.FC = () => {
                                 onClick={() => updateEnrollmentStatus(enrollment.idInscription, 'En attente')}
                                 className="border-warning text-warning hover:bg-warning/10"
                               >
-                                Remettre en attente
+                                {t('revertToPending')}
                               </Button>
                             )}
                             
@@ -545,7 +545,7 @@ const Enrollments: React.FC = () => {
               
               {filteredEnrollments.length === 0 && !loading && (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Aucune inscription trouvée</p>
+                  <p className="text-muted-foreground">{t('noEnrollmentFound')}</p>
                 </div>
               )}
             </div>

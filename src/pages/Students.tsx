@@ -172,7 +172,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="prenom">Prénom *</Label>
+        <Label htmlFor="prenom">{t('firstName')} *</Label>
         <Input
           id="prenom"
           value={formData.prenom}
@@ -183,7 +183,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="nom">Nom *</Label>
+        <Label htmlFor="nom">{t('lastName')} *</Label>
         <Input
           id="nom"
           value={formData.nom}
@@ -196,7 +196,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
     </div>
 
     <div className="space-y-2">
-      <Label htmlFor="email">Email *</Label>
+      <Label htmlFor="email">{t('email')} *</Label>
       <Input
         id="email"
         type="email"
@@ -210,7 +210,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
 
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="telephone">Téléphone</Label>
+        <Label htmlFor="telephone">{t('phone')}</Label>
         <Input
           id="telephone"
           value={formData.telephone}
@@ -221,7 +221,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="dateNaissance">Date de naissance</Label>
+        <Label htmlFor="dateNaissance">{t('dateOfBirth')}</Label>
         <Input
           id="dateNaissance"
           type="date"
@@ -235,7 +235,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
     </div>
 
     <div className="space-y-2">
-      <Label htmlFor="adresse">Adresse</Label>
+      <Label htmlFor="adresse">{t('address')}</Label>
       <Input
         id="adresse"
         value={formData.adresse}
@@ -247,7 +247,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
     </div>
 
     <div className="space-y-2">
-      <Label htmlFor="cin">CIN *</Label>
+      <Label htmlFor="cin">{t('cin')} *</Label>
       <Input
         id="cin"
         value={formData.cin}
@@ -303,8 +303,8 @@ const Students: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger la liste des étudiants",
+        title: t("error"),
+        description: t("errorLoadingStudents"),
         variant: "destructive",
       });
     } finally {
@@ -327,8 +327,8 @@ const Students: React.FC = () => {
   const handleAddStudent = async () => {
     if (!formData.nom || !formData.prenom || !formData.email || !formData.cin) {
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires (Nom, Prénom, Email, CIN)",
+        title: t("error"),
+        description: t("fillRequiredFieldsError"),
         variant: "destructive",
       });
       return;
@@ -339,8 +339,8 @@ const Students: React.FC = () => {
       const newApprenant = await apiService.create(formData);
       
       toast({
-        title: "Succès",
-        description: `${formData.prenom} ${formData.nom} a été ajouté(e) avec succès.`,
+        title: t("success"),
+        description: `${formData.prenom} ${formData.nom} ${t('studentAddedSuccessMessage')}`,
       });
 
       resetForm();
@@ -349,8 +349,8 @@ const Students: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de l\'ajout:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de l'ajout de l'étudiant",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t('errorAddingStudent'),
         variant: "destructive",
       });
     } finally {
@@ -362,8 +362,8 @@ const Students: React.FC = () => {
     if (!selectedStudent) return;
     if (!formData.nom || !formData.prenom || !formData.email || !formData.cin) {
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires (Nom, Prénom, Email, CIN)",
+        title: t("error"),
+        description: t("fillRequiredFieldsError"),
         variant: "destructive",
       });
       return;
@@ -374,8 +374,8 @@ const Students: React.FC = () => {
       await apiService.update(selectedStudent.idApprenant!, formData);
       
       toast({
-        title: t('studentUpdatedSuccess'),
-        description: `${formData.prenom} ${formData.nom} a été mis(e) à jour.`,
+        title: t('success'),
+        description: `${formData.prenom} ${formData.nom} ${t('studentUpdatedSuccessMessage')}`,
       });
 
       resetForm();
@@ -385,8 +385,8 @@ const Students: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'étudiant",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t('errorUpdatingStudent'),
         variant: "destructive",
       });
     } finally {
@@ -402,16 +402,16 @@ const Students: React.FC = () => {
       await apiService.delete(student.idApprenant);
       
       toast({
-        title: t('studentDeletedSuccess'),
-        description: `${student.prenom} ${student.nom} a été supprimé(e).`,
+        title: t('success'),
+        description: `${student.prenom} ${student.nom} ${t('studentDeletedSuccessMessage')}`,
       });
       
       await loadStudents();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de la suppression de l'étudiant",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t('errorDeletingStudent'),
         variant: "destructive",
       });
     } finally {
@@ -485,7 +485,7 @@ const Students: React.FC = () => {
                   {t('studentManagement')}
                 </CardTitle>
                 <CardDescription>
-                  Manage your student database and enrollment information
+                  {t('manageStudentDatabase')}
                 </CardDescription>
               </div>
               
@@ -509,7 +509,7 @@ const Students: React.FC = () => {
                     <DialogHeader>
                       <DialogTitle>{t('addStudent')}</DialogTitle>
                       <DialogDescription>
-                        Add a new student to the system
+                        {t('addNewStudentToSystem')}
                       </DialogDescription>
                     </DialogHeader>
                     <StudentForm
@@ -549,7 +549,7 @@ const Students: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="glass-card">
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
                   <SelectItem value="active">{t('active')}</SelectItem>
                   <SelectItem value="inactive">{t('inactive')}</SelectItem>
                 </SelectContent>
@@ -561,11 +561,11 @@ const Students: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30">
-                    <TableHead className="text-foreground font-semibold">Étudiant</TableHead>
-                    <TableHead className="text-foreground font-semibold">Contact</TableHead>
-                    <TableHead className="text-foreground font-semibold">CIN</TableHead>
-                    <TableHead className="text-foreground font-semibold">Date de naissance</TableHead>
-                    <TableHead className="text-foreground font-semibold">Inscriptions</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('student')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('contact')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('cin')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('dateOfBirth')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('enrollmentsCount')}</TableHead>
                     <TableHead className="text-foreground font-semibold text-right">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -627,7 +627,7 @@ const Students: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {student.inscriptions?.length || 0} inscription(s)
+                            {student.inscriptions?.length || 0} {t('enrollments')}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -655,7 +655,7 @@ const Students: React.FC = () => {
                                 <DialogHeader>
                                   <DialogTitle>{t('editStudent')}</DialogTitle>
                                   <DialogDescription>
-                                    Update student information
+                                    {t('updateStudentInfo')}
                                   </DialogDescription>
                                 </DialogHeader>
                                 <StudentForm
@@ -688,8 +688,8 @@ const Students: React.FC = () => {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>{t('deleteStudent')}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Êtes-vous sûr de vouloir supprimer {student.prenom} {student.nom} ? 
-                                    Cette action ne peut pas être annulée.
+                                    {t('areYouSureDelete')} {student.prenom} {student.nom} ? 
+                                    {t('thisActionIsIrreversible')}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -714,13 +714,13 @@ const Students: React.FC = () => {
               {loading && (
                 <div className="text-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                  <p className="text-muted-foreground">Chargement...</p>
+                  <p className="text-muted-foreground">{t('loading')}</p>
                 </div>
               )}
               
               {!loading && filteredStudents.length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Aucun étudiant trouvé</p>
+                  <p className="text-muted-foreground">{t('noStudentFound')}</p>
                 </div>
               )}
             </div>

@@ -120,28 +120,28 @@ const Reports: React.FC = () => {
 
   const keyMetrics = [
     {
-      title: 'Total Revenue',
+      title: t('totalRevenue'),
       value: `$${totalRevenue.toLocaleString()}`,
       change: '+15.3%',
       icon: DollarSign,
       color: 'gradient-primary',
     },
     {
-      title: 'Total Students',
+      title: t('totalStudents'),
       value: totalStudents.toString(),
       change: '+8.7%',
       icon: Users,
       color: 'gradient-accent',
     },
     {
-      title: 'Total Enrollments',
+      title: t('totalEnrollments'),
       value: totalEnrollments.toString(),
       change: '+12.1%',
       icon: BookOpen,
       color: 'bg-warning',
     },
     {
-      title: 'Avg Revenue/Student',
+      title: t('avgRevenuePerStudent'),
       value: `$${Math.round(avgRevenuePerStudent).toLocaleString()}`,
       change: '+6.4%',
       icon: TrendingUp,
@@ -163,7 +163,7 @@ const Reports: React.FC = () => {
               {t('reports')}
             </h1>
             <p className="text-muted-foreground">
-              Analytics and insights for your training management
+              {t('analyticsAndInsights')}
             </p>
           </div>
           
@@ -174,16 +174,16 @@ const Reports: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-card">
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="year">This Year</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="all">{t('allTime')}</SelectItem>
+                <SelectItem value="year">{t('thisYear')}</SelectItem>
+                <SelectItem value="month">{t('thisMonth')}</SelectItem>
+                <SelectItem value="week">{t('thisWeek')}</SelectItem>
               </SelectContent>
             </Select>
             
             <Button variant="outline" className="glass border-border/30">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              {t('export')}
             </Button>
           </div>
         </div>
@@ -211,7 +211,7 @@ const Reports: React.FC = () => {
                         {metric.value}
                       </p>
                       <p className="text-xs text-success mt-1">
-                        {metric.change} from last period
+                        {metric.change} {t('fromLastPeriod')}
                       </p>
                     </div>
                     <div className={`w-12 h-12 rounded-xl ${metric.color} flex items-center justify-center`}>
@@ -237,10 +237,10 @@ const Reports: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Revenue Trends
+                {t('revenueTrends')}
               </CardTitle>
               <CardDescription>
-                Monthly revenue and enrollment trends
+                {t('monthlyRevenueAndEnrollment')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -283,10 +283,10 @@ const Reports: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PieChart className="w-5 h-5" />
-                Payment Status Distribution
+                {t('paymentStatusDistribution')}
               </CardTitle>
               <CardDescription>
-                Breakdown of payment statuses
+                {t('breakdownOfPaymentStatuses')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -335,10 +335,10 @@ const Reports: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
-                Course Popularity
+                {t('coursePopularity')}
               </CardTitle>
               <CardDescription>
-                Enrollments by course
+                {t('enrollmentsByCourse')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -375,10 +375,10 @@ const Reports: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                Monthly Enrollments
+                {t('monthlyEnrollments')}
               </CardTitle>
               <CardDescription>
-                Enrollment trends by month
+                {t('enrollmentTrendsByMonth')}
               </CardDescription>
             </CardHeader>
             <CardContent>

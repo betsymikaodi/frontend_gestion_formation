@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -50,6 +51,7 @@ const formatAriary = (amount: number) => {
 };
 
 const Payments = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [inscriptions, setInscriptions] = useState<any[]>([]);
@@ -90,8 +92,8 @@ const Payments = () => {
       setInscriptions(inscriptionsData);
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de charger les données",
+        title: t('error'),
+        description: error.message || t('cannotLoadData'),
         variant: "destructive"
       });
     } finally {
@@ -103,8 +105,8 @@ const Payments = () => {
     try {
       if (!addForm.inscriptionId || !addForm.montant || !addForm.modePaiement || !addForm.module) {
         toast({
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs obligatoires",
+          title: t('error'),
+          description: t('fillAllFields'),
           variant: "destructive"
         });
         return;
@@ -116,13 +118,13 @@ const Payments = () => {
       await loadData();
       
       toast({
-        title: "Succès",
-        description: "Paiement enregistré avec succès"
+        title: t('success'),
+        description: t('paymentRecordedSuccess')
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Erreur lors de l'enregistrement du paiement",
+        title: t('error'),
+        description: error.message || t('errorRecordingPayment'),
         variant: "destructive"
       });
     }
@@ -133,13 +135,13 @@ const Payments = () => {
       await PaiementsService.delete(id);
       await loadData();
       toast({
-        title: "Succès",
-        description: "Paiement supprimé avec succès"
+        title: t('success'),
+        description: t('paymentDeletedSuccess')
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Erreur lors de la suppression du paiement",
+        title: t('error'),
+        description: error.message || t('errorDeletingPayment'),
         variant: "destructive"
       });
     }
@@ -149,8 +151,8 @@ const Payments = () => {
     try {
       if (!editForm.inscriptionId || !editForm.montant || !editForm.modePaiement || !editForm.module) {
         toast({
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs obligatoires",
+          title: t('error'),
+          description: t('fillAllFields'),
           variant: "destructive"
         });
         return;
@@ -167,13 +169,13 @@ const Payments = () => {
       await loadData();
       
       toast({
-        title: "Succès",
-        description: "Paiement modifié avec succès"
+        title: t('success'),
+        description: t('paymentUpdatedSuccess')
       });
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.message || "Erreur lors de la modification du paiement",
+        title: t('error'),
+        description: error.message || t('errorUpdatingPayment'),
         variant: "destructive"
       });
     }
@@ -205,10 +207,10 @@ const Payments = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Gestion des Paiements
+              {t('paymentManagement')}
             </h1>
             <p className="text-muted-foreground">
-              Suivez et gérez les paiements des inscriptions
+              {t('trackAndManagePayments')}
             </p>
           </div>
           
@@ -216,26 +218,26 @@ const Payments = () => {
             <DialogTrigger asChild>
               <Button className="gradient-primary text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Nouveau Paiement
+                {t('newPayment')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>Nouveau Paiement</DialogTitle>
+                <DialogTitle>{t('newPayment')}</DialogTitle>
                 <CardDescription>
-                  Remplissez les informations pour enregistrer un nouveau paiement
+                  {t('fillPaymentInfo')}
                 </CardDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="inscription-select" className="text-right">
-                    Inscription *
+                    {t('enrollment')} *
                   </Label>
                   <div className="col-span-3">
                     {addForm.inscriptionId > 0 && (
                       <div className="text-sm text-muted-foreground mb-2">
-                        Inscription sélectionnée : #{addForm.inscriptionId}
+                        {t('selectedEnrollment')} : #{addForm.inscriptionId}
                       </div>
                     )}
                     <Select
@@ -243,7 +245,7 @@ const Payments = () => {
                       onValueChange={(value) => setAddForm({...addForm, inscriptionId: parseInt(value)})}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une inscription" />
+                        <SelectValue placeholder={t('selectEnrollment')} />
                       </SelectTrigger>
                       <SelectContent>
                         {inscriptions.map((inscription) => {
@@ -254,8 +256,8 @@ const Payments = () => {
                               value={inscription.idInscription.toString()}
                             >
                               {selectedInscription ? 
-                                `Inscription #${inscription.idInscription} (Sélectionnée)` :
-                                `Inscription #${inscription.idInscription}`
+                                `${t('enrollment')} #${inscription.idInscription} (${t('selected')})` :
+                                `${t('enrollment')} #${inscription.idInscription}`
                               }
                             </SelectItem>
                           );
@@ -267,7 +269,7 @@ const Payments = () => {
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="payment-amount" className="text-right">
-                    Montant *
+                    {t('amount')} *
                   </Label>
                   <Input
                     id="payment-amount"
@@ -281,40 +283,40 @@ const Payments = () => {
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="payment-method" className="text-right">
-                    Mode de Paiement *
+                    {t('paymentMethod')} *
                   </Label>
                   <Select
                     value={addForm.modePaiement}
                     onValueChange={(value) => setAddForm({...addForm, modePaiement: value})}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner un mode de paiement" />
+                      <SelectValue placeholder={t('selectPaymentMethod')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Mobile Money">Mobile Money</SelectItem>
-                      <SelectItem value="Virement">Virement</SelectItem>
-                      <SelectItem value="Espèces">Espèces</SelectItem>
-                      <SelectItem value="Chèque">Chèque</SelectItem>
+                      <SelectItem value="Mobile Money">{t('mobileMoney')}</SelectItem>
+                      <SelectItem value="Virement">{t('transfer')}</SelectItem>
+                      <SelectItem value="Espèces">{t('cash')}</SelectItem>
+                      <SelectItem value="Chèque">{t('check')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="payment-module" className="text-right">
-                    Module *
+                    {t('module')} *
                   </Label>
                   <Select
                     value={addForm.module}
                     onValueChange={(value) => setAddForm({...addForm, module: value})}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner un module" />
+                      <SelectValue placeholder={t('selectModule')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Module 1">Module 1</SelectItem>
-                      <SelectItem value="Module 2">Module 2</SelectItem>
-                      <SelectItem value="Module 3">Module 3</SelectItem>
-                      <SelectItem value="Module 4">Module 4</SelectItem>
+                      <SelectItem value="Module 1">{t('module1')}</SelectItem>
+                      <SelectItem value="Module 2">{t('module2')}</SelectItem>
+                      <SelectItem value="Module 3">{t('module3')}</SelectItem>
+                      <SelectItem value="Module 4">{t('module4')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -322,9 +324,9 @@ const Payments = () => {
 
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Annuler
+                  {t('cancel')}
                 </Button>
-                <Button onClick={handleAddPayment}>Enregistrer</Button>
+                <Button onClick={handleAddPayment}>{t('save')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -342,7 +344,7 @@ const Payments = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Total des Paiements
+                    {t('totalPaymentsTitle')}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-2">
                     {formatAriary(totalPayments)} Ar
@@ -366,7 +368,7 @@ const Payments = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Paiements du Jour
+                    {t('paymentsToday')}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-2">
                     {formatAriary(totalPaymentsToday)} Ar
@@ -390,7 +392,7 @@ const Payments = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Nombre de Paiements
+                    {t('numberOfPayments')}
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-2">
                     {paiements.length}
@@ -413,9 +415,9 @@ const Payments = () => {
       >
         <Card className="glass-card border-border/30">
           <CardHeader>
-            <CardTitle>Liste des Paiements</CardTitle>
+            <CardTitle>{t('paymentList')}</CardTitle>
             <CardDescription>
-              Historique des paiements reçus
+              {t('paymentHistory')}
             </CardDescription>
           </CardHeader>
           
@@ -424,27 +426,27 @@ const Payments = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30">
-                    <TableHead className="text-foreground font-semibold">ID</TableHead>
-                    <TableHead className="text-foreground font-semibold">Inscription</TableHead>
-                    <TableHead className="text-foreground font-semibold">Date</TableHead>
-                    <TableHead className="text-foreground font-semibold">Montant</TableHead>
-                    <TableHead className="text-foreground font-semibold">Mode</TableHead>
-                    <TableHead className="text-foreground font-semibold">Module</TableHead>
-                    <TableHead className="text-foreground font-semibold">Actions</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('id')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('enrollment')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('date')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('amount')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('mode')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('module')}</TableHead>
+                    <TableHead className="text-foreground font-semibold">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8">
-                        Chargement des paiements...
+                        {t('loadingPayments')}
                       </TableCell>
                     </TableRow>
                   ) : paiements.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8">
                         <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">Aucun paiement enregistré</p>
+                        <p className="text-muted-foreground">{t('noPaymentFound')}</p>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -501,20 +503,20 @@ const Payments = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Modifier le Paiement #{editForm.idPaiement}</DialogTitle>
+            <DialogTitle>{t('editPaymentTitle')} #{editForm.idPaiement}</DialogTitle>
             <CardDescription>
-              Modifiez les informations du paiement
+              {t('editPaymentInfo')}
             </CardDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-inscription-select" className="text-right">
-                Inscription *
+                {t('enrollment')} *
               </Label>
               <div className="col-span-3">
                 <div className="text-sm text-muted-foreground mb-2">
-                  Inscription actuelle : #{editForm.inscriptionId}
+                  {t('currentEnrollment')} : #{editForm.inscriptionId}
                 </div>
                 <Select
                   value={editForm.inscriptionId.toString()}
@@ -529,7 +531,7 @@ const Payments = () => {
                       key={editForm.inscriptionId} 
                       value={editForm.inscriptionId.toString()}
                     >
-                      Inscription #{editForm.inscriptionId} (Actuelle)
+                      {t('enrollment')} #{editForm.inscriptionId} ({t('current')})
                     </SelectItem>
                     {inscriptions
                       .filter(inscription => inscription.idInscription !== editForm.inscriptionId)
@@ -538,7 +540,7 @@ const Payments = () => {
                           key={inscription.idInscription} 
                           value={inscription.idInscription.toString()}
                         >
-                          Inscription #{inscription.idInscription}
+                          {t('enrollment')} #{inscription.idInscription}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -548,7 +550,7 @@ const Payments = () => {
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-payment-amount" className="text-right">
-                Montant *
+                {t('amount')} *
               </Label>
               <Input
                 id="edit-payment-amount"
@@ -562,40 +564,40 @@ const Payments = () => {
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-payment-method" className="text-right">
-                Mode de Paiement *
+                {t('paymentMethod')} *
               </Label>
               <Select
                 value={editForm.modePaiement}
                 onValueChange={(value) => setEditForm({...editForm, modePaiement: value})}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un mode de paiement" />
+                  <SelectValue placeholder={t('selectPaymentMethod')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mobile Money">Mobile Money</SelectItem>
-                  <SelectItem value="Virement">Virement</SelectItem>
-                  <SelectItem value="Espèces">Espèces</SelectItem>
-                  <SelectItem value="Chèque">Chèque</SelectItem>
+                  <SelectItem value="Mobile Money">{t('mobileMoney')}</SelectItem>
+                  <SelectItem value="Virement">{t('transfer')}</SelectItem>
+                  <SelectItem value="Espèces">{t('cash')}</SelectItem>
+                  <SelectItem value="Chèque">{t('check')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-payment-module" className="text-right">
-                Module *
+                {t('module')} *
               </Label>
               <Select
                 value={editForm.module}
                 onValueChange={(value) => setEditForm({...editForm, module: value})}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un module" />
+                  <SelectValue placeholder={t('selectModule')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Module 1">Module 1</SelectItem>
-                  <SelectItem value="Module 2">Module 2</SelectItem>
-                  <SelectItem value="Module 3">Module 3</SelectItem>
-                  <SelectItem value="Module 4">Module 4</SelectItem>
+                  <SelectItem value="Module 1">{t('module1')}</SelectItem>
+                  <SelectItem value="Module 2">{t('module2')}</SelectItem>
+                  <SelectItem value="Module 3">{t('module3')}</SelectItem>
+                  <SelectItem value="Module 4">{t('module4')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -603,9 +605,9 @@ const Payments = () => {
 
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Annuler
+              {t('cancel')}
             </Button>
-            <Button onClick={handleEditPayment}>Enregistrer</Button>
+            <Button onClick={handleEditPayment}>{t('save')}</Button>
           </div>
         </DialogContent>
       </Dialog>

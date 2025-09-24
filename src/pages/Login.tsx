@@ -286,8 +286,8 @@ const Login: React.FC = () => {
                 className="text-primary hover:text-primary-glow"
               >
                 {isLogin
-                  ? `Don't have an account? ${t('createAccount')}`
-                  : `Already have an account? ${t('signin')}`
+                  ? `${t('createAccount')}?`
+                  : `${t('signin')}?`
                 }
               </Button>
             </div>

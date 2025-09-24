@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import { FormationsService } from '@/services/formations.service';
 import { formatAriary } from '@/lib/format';
 
 const Courses = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +54,8 @@ const Courses = () => {
       setCourses(data);
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les formations",
+        title: t('error'),
+        description: t('cannotLoadCourses'),
         variant: "destructive"
       });
     } finally {
@@ -69,8 +71,8 @@ const Courses = () => {
   const handleAddCourse = async () => {
     if (!addForm.nom || !addForm.description || !addForm.frais || !addForm.duree) {
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: t('error'),
+        description: t('fillAllFields'),
         variant: "destructive"
       });
       return;
@@ -89,13 +91,13 @@ const Courses = () => {
       await fetchCourses();
       
       toast({
-        title: "Succès",
-        description: "Formation ajoutée avec succès"
+        title: t('success'),
+        description: t('courseAddedSuccess')
       });
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter la formation",
+        title: t('error'),
+        description: t('cannotAddCourse'),
         variant: "destructive"
       });
     }
@@ -104,8 +106,8 @@ const Courses = () => {
   const handleEditCourse = async () => {
     if (!editForm.nom || !editForm.description || !editForm.frais || !editForm.duree) {
       toast({
-        title: "Erreur", 
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: t('error'), 
+        description: t('fillAllFields'),
         variant: "destructive"
       });
       return;
@@ -125,7 +127,7 @@ const Courses = () => {
 
     try {
       console.log('Mise à jour de la formation:', {
-        id: editingCourse.id_formation,
+        id: editingCourse.idFormation,
         data: updateData
       });
 
@@ -136,14 +138,14 @@ const Courses = () => {
       await fetchCourses();
       
       toast({
-        title: "Succès",
-        description: "Formation mise à jour avec succès"
+        title: t('success'),
+        description: t('courseUpdateSuccess')
       });
     } catch (error: any) {
       console.error('Erreur lors de la mise à jour:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de modifier la formation",
+        title: t('error'),
+        description: error.message || t('cannotUpdateCourse'),
         variant: "destructive"
       });
     }
@@ -153,8 +155,8 @@ const Courses = () => {
     if (!idFormation || isNaN(idFormation)) {
       console.error('ID de formation invalide:', idFormation);
       toast({
-        title: "Erreur",
-        description: "ID de formation invalide",
+        title: t('error'),
+        description: t('invalidCourseId'),
         variant: "destructive"
       });
       return;
@@ -165,14 +167,14 @@ const Courses = () => {
       await FormationsService.delete(idFormation);
       await fetchCourses();
       toast({
-        title: "Succès",
-        description: "Formation supprimée avec succès"
+        title: t('success'),
+        description: t('courseDeleteSuccess')
       });
     } catch (error: any) {
       console.error('Erreur lors de la suppression:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de supprimer la formation",
+        title: t('error'),
+        description: error.message || t('cannotDeleteCourse'),
         variant: "destructive"
       });
     }
@@ -193,52 +195,52 @@ const Courses = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestion des Formations</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('courseManagement')}</h1>
           <p className="text-muted-foreground">
-            Gérez vos formations et cours disponibles
+            {t('manageCourses')}
           </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter Formation
+              {t('addCourse')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Ajouter une nouvelle formation</DialogTitle>
-              <p className="text-muted-foreground">Remplissez les informations pour créer une nouvelle formation.</p>
+              <DialogTitle>{t('addNewCourse')}</DialogTitle>
+              <p className="text-muted-foreground">{t('fillCourseInfo')}</p>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add-name" className="text-right">
-                  Nom *
+                  {t('courseName')} *
                 </Label>
                 <Input
                   id="add-name"
                   value={addForm.nom}
                   onChange={(e) => setAddForm({...addForm, nom: e.target.value})}
                   className="col-span-3"
-                  placeholder="Nom de la formation"
+                  placeholder={t('courseNamePlaceholder')}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add-description" className="text-right">
-                  Description *
+                  {t('description')} *
                 </Label>
                 <Textarea
                   id="add-description"
                   value={addForm.description}
                   onChange={(e) => setAddForm({...addForm, description: e.target.value})}
                   className="col-span-3"
-                  placeholder="Description de la formation"
+                  placeholder={t('descriptionPlaceholder')}
                   rows={3}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add-fee" className="text-right">
-                  Prix (Ar) *
+                  {t('priceAr')} *
                 </Label>
                 <Input
                   id="add-fee"
@@ -246,12 +248,12 @@ const Courses = () => {
                   value={addForm.frais}
                   onChange={(e) => setAddForm({...addForm, frais: e.target.value})}
                   className="col-span-3"
-                  placeholder="Prix en Ariary"
+                  placeholder={t('pricePlaceholder')}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="add-duration" className="text-right">
-                  Durée (jours) *
+                  {t('durationDays')} *
                 </Label>
                 <Input
                   id="add-duration"
@@ -259,15 +261,15 @@ const Courses = () => {
                   value={addForm.duree}
                   onChange={(e) => setAddForm({...addForm, duree: e.target.value})}
                   className="col-span-3"
-                  placeholder="Ex: 90, 60..."
+                  placeholder={t('durationPlaceholder')}
                 />
               </div>
             </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Annuler
+                {t('cancel')}
               </Button>
-              <Button onClick={handleAddCourse}>Ajouter</Button>
+              <Button onClick={handleAddCourse}>{t('add')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -277,12 +279,12 @@ const Courses = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
-            Rechercher les formations
+            {t('searchCourses')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Input
-            placeholder="Rechercher par nom ou description..."
+            placeholder={t('searchByNameOrDescription')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -292,25 +294,25 @@ const Courses = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Formations ({filteredCourses.length})</CardTitle>
+          <CardTitle>{t('courseList')} ({filteredCourses.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">ID</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Prix</TableHead>
-                <TableHead>Durée (jours)</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-20">{t('id')}</TableHead>
+                <TableHead>{t('courseName')}</TableHead>
+                <TableHead>{t('description')}</TableHead>
+                <TableHead>{t('price')}</TableHead>
+                <TableHead>{t('durationDays')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
-                    Chargement des formations...
+                    {t('loadingCourses')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -347,7 +349,7 @@ const Courses = () => {
           {filteredCourses.length === 0 && (
             <div className="text-center py-8">
               <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Aucune formation trouvée</p>
+              <p className="text-muted-foreground">{t('noCourseFound')}</p>
             </div>
           )}
         </CardContent>
@@ -357,13 +359,13 @@ const Courses = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
   <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Modifier la formation</DialogTitle>
-            <p className="text-muted-foreground">Modifiez les informations de la formation sélectionnée.</p>
+            <DialogTitle>{t('editCourseTitle')}</DialogTitle>
+            <p className="text-muted-foreground">{t('editCourseDescription')}</p>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-name" className="text-right">
-                Nom *
+                {t('courseName')} *
               </Label>
               <Input
                 id="edit-name"
@@ -374,7 +376,7 @@ const Courses = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-description" className="text-right">
-                Description *
+                {t('description')} *
               </Label>
               <Textarea
                 id="edit-description"
@@ -386,7 +388,7 @@ const Courses = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-fee" className="text-right">
-                Prix (€) *
+                {t('priceAr')} *
               </Label>
               <Input
                 id="edit-fee"
@@ -398,7 +400,7 @@ const Courses = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-duration" className="text-right">
-                Durée (jours) *
+                {t('durationDays')} *
               </Label>
               <Input
                 id="edit-duration"
@@ -411,9 +413,9 @@ const Courses = () => {
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Annuler
+              {t('cancel')}
             </Button>
-            <Button onClick={handleEditCourse}>Sauvegarder</Button>
+            <Button onClick={handleEditCourse}>{t('saveChanges')}</Button>
           </div>
         </DialogContent>
       </Dialog>

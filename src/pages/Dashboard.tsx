@@ -178,25 +178,25 @@ const Dashboard: React.FC = () => {
 
   const statsCards = stats ? [
     {
-      title: "Apprenants",
+      title: t("students"),
       value: stats.totalApprenants.toString(),
       icon: Users,
       gradient: 'gradient-primary'
     },
     {
-      title: "Formations",
+      title: t("courses"),
       value: stats.totalFormations.toString(),
       icon: GraduationCap,
       gradient: 'bg-violet-500'
     },
     {
-      title: "Inscriptions",
+      title: t("enrollments"),
       value: stats.totalInscriptions.toString(),
       icon: BookCheck,
       gradient: 'gradient-accent'
     },
     {
-      title: "Revenus Totaux",
+      title: t("totalRevenue"),
       value: formatAriary(stats.totalRevenue) + " Ar",
       icon: DollarSign,
       gradient: 'bg-success'
@@ -236,7 +236,7 @@ const Dashboard: React.FC = () => {
           {t('welcomeBack')}, {user?.firstName}! 👋
         </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your training management system today.
+          {t('welcomeMessage')}
         </p>
       </motion.div>
 
@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
                         {stat.value}
                       </p>
                       <p className="text-xs text-success mt-1">
-                        {stat.change} from last month
+                        {stat.change} {t('fromLastMonth')}
                       </p>
                     </div>
                     <div className={`w-12 h-12 rounded-xl ${stat.gradient} flex items-center justify-center`}>
@@ -288,10 +288,10 @@ const Dashboard: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Monthly Trends
+                {t('monthlyTrends')}
               </CardTitle>
               <CardDescription>
-                Enrollments and revenue over time
+                {t('enrollmentsAndRevenueOverTime')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -337,10 +337,10 @@ const Dashboard: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
-                Payment Status
+                {t('paymentStatus')}
               </CardTitle>
               <CardDescription>
-                Distribution of payment statuses
+                {t('paymentStatusDistribution')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -394,10 +394,10 @@ const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Recent Activity
+              {t('recentActivity')}
             </CardTitle>
             <CardDescription>
-              Latest enrollments and payments
+              {t('latestEnrollmentsAndPayments')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -435,7 +435,7 @@ const Dashboard: React.FC = () => {
               ))}
               {recentActivities.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucune activité récente
+                  {t('noRecentActivity')}
                 </div>
               )}
             </div>
