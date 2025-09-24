@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         variants={sidebarVariants}
         animate={isOpen ? "open" : "closed"}
         className={cn(
-          "fixed top-0 left-0 h-full w-80 glass-card border-r z-50",
+          "h-16 w-full lg:w-56 glass-card border-r z-50",
           "lg:relative lg:translate-x-0 lg:z-auto"
         )}
       >

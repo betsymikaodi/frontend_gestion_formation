@@ -43,7 +43,7 @@ const Login: React.FC = () => {
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
-    localStorage.setItem('language', lng);
+    // Optionnel: stocker la langue en mémoire si besoin
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -292,13 +292,7 @@ const Login: React.FC = () => {
               </Button>
             </div>
 
-            {isLogin && (
-              <div className="mt-4 p-3 glass rounded-lg text-sm text-muted-foreground">
-                <p className="font-medium mb-1">Demo Credentials:</p>
-                <p>Email: admin@training.com</p>
-                <p>Password: admin123</p>
-              </div>
-            )}
+            {/* Demo credentials supprimés, car l'utilisateur doit exister en base */}
           </CardContent>
         </Card>
       </motion.div>

@@ -1,9 +1,27 @@
 export const API_URL = 'http://localhost:8080/api';
-export const API_HEADERS = {
+
+// Gestion du token JWT en mémoire (pas de localStorage)
+let AUTH_TOKEN: string | null = null;
+
+export function setAuthToken(token: string | null) {
+    AUTH_TOKEN = token;
+    if (token) {
+        (API_HEADERS as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete (API_HEADERS as Record<string, string>)['Authorization'];
+    }
+}
+
+export function getAuthToken() {
+    return AUTH_TOKEN;
+}
+
+// En-têtes communs; l'Authorization est injecté via setAuthToken()
+export const API_HEADERS: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache'
+    'Pragma': 'no-cache',
 };
 
 // Type des statistiques
@@ -30,6 +48,10 @@ export interface Statistics {
 
 // Routes de l'API
 export const API_ROUTES = {
+    auth: {
+        login: `${API_URL}/auth/login`,
+        register: `${API_URL}/auth/register`,
+    },
     stats: {
         base: `${API_URL}/stats`,
         dashboard: `${API_URL}/stats/dashboard`,
