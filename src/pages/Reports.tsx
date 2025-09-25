@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Student, Enrollment } from '@/types';
+import { StatisticsService } from '@/services/statistics.service';
 
 const Reports: React.FC = () => {
   const { t } = useTranslation();
@@ -38,10 +39,21 @@ const Reports: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [dateRange, setDateRange] = useState('all');
+  const [totalStudents, setTotalStudents] = useState(0);
 
   useEffect(() => {
     loadData();
+    fetchStudentCount();
   }, []);
+
+  const fetchStudentCount = async () => {
+    try {
+      const count = await StatisticsService.getStudentCount();
+      setTotalStudents(count);
+    } catch (error) {
+      console.error("Failed to fetch student count:", error);
+    }
+  };
 
   const loadData = () => {
     const storedStudents = JSON.parse(localStorage.getItem('students') || '[]');
@@ -114,7 +126,6 @@ const Reports: React.FC = () => {
 
   // Calculate key metrics
   const totalRevenue = enrollments.filter(e => e.paymentStatus === 'paid').reduce((sum, e) => sum + e.fee, 0);
-  const totalStudents = students.length;
   const totalEnrollments = enrollments.length;
   const avgRevenuePerStudent = totalStudents > 0 ? totalRevenue / totalStudents : 0;
 

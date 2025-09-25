@@ -79,7 +79,7 @@ const Enrollments: React.FC = () => {
       console.log('Formations reçues:', coursesData);
       
       setEnrollments(enrollmentsData);
-      setStudents(studentsData);
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
       setCourses(coursesData);
       
     } catch (error: any) {

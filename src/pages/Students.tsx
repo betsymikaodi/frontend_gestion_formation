@@ -301,7 +301,7 @@ const Students: React.FC = () => {
     try {
       setLoading(true);
       const apprenants = await apiService.getAll();
-      setStudents(apprenants);
+      setStudents(Array.isArray(apprenants) ? apprenants : []);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast({

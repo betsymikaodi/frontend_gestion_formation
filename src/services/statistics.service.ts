@@ -65,4 +65,15 @@ export class StatisticsService {
     }
     return await response.json();
   }
+
+  // Total des étudiants
+  static async getStudentCount(): Promise<number> {
+    const response = await fetch('http://localhost:8080/api/apprenants/count', {
+      headers: API_HEADERS,
+    });
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération du nombre d\'étudiants');
+    }
+    return await response.json();
+  }
 }
