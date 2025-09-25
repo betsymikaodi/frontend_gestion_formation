@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAuthToken } from '@/config/api';
@@ -13,6 +13,7 @@ import {
   Calendar,
   Filter,
   Download,
+  Upload,
   Eye,
   Loader2,
 } from 'lucide-react';
@@ -55,18 +56,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import StudentDetailsModal from '@/components/ui/student-details-modal';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 // Interface pour la réponse paginée
-interface PaginatedResponse<T> {
-  content: T[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-  size: number;
+interface BackendPaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    current_page: number;
+    page_size: number;
+    total_elements: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+    first_page: boolean;
+    last_page: boolean;
+  };
 }
 
 // Interface pour l'API Spring Boot
@@ -83,11 +98,21 @@ interface Apprenant {
   inscriptions?: any[];
 }
 
+interface ImportResult {
+  total: number;
+  inserted: number;
+  skipped: number;
+  errors: {
+    rowNumber: number;
+    message: string;
+  }[];
+}
+
 // Service API
 const API_BASE_URL = 'http://localhost:8080/api';
 
 const apiService = {
-  async search(params: { [key: string]: any }): Promise<PaginatedResponse<Apprenant>> {
+  async search(params: { [key: string]: any }): Promise<BackendPaginatedResponse<Apprenant>> {
     const query = new URLSearchParams(params).toString();
     const response = await fetch(`${API_BASE_URL}/apprenants?${query}`, {
       headers: {
@@ -148,6 +173,61 @@ const apiService = {
       const errorText = await response.text();
       throw new Error(`Erreur lors de la suppression: ${errorText}`);
     }
+  },
+
+  async exportData(format: 'csv' | 'excel', scope: 'all' | 'page', params: { [key: string]: any } = {}): Promise<{ blob: Blob, filename: string }> {
+    let url = `${API_BASE_URL}/apprenants/export/${format}/${scope}`;
+    if (scope === 'page') {
+      const query = new URLSearchParams(params).toString();
+      url += `?${query}`;
+    }
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur lors de l'exportation: ${errorText}`);
+    }
+
+    const disposition = response.headers.get('Content-Disposition');
+    let filename = `export.${format === 'excel' ? 'xlsx' : 'csv'}`;
+    if (disposition && disposition.includes('attachment')) {
+      const filenameMatch = disposition.match(/filename="(.+?)"/);
+      if (filenameMatch && filenameMatch.length > 1) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
+  },
+
+  async importData(file: File): Promise<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(`${API_BASE_URL}/apprenants/import`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    const resultData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(resultData.message || `Erreur lors de l'importation`);
+    }
+    
+    return resultData;
   }
 };
 
@@ -291,6 +371,7 @@ const StudentForm: React.FC<StudentFormProps> = React.memo(({
 const Students: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [students, setStudents] = useState<Apprenant[]>([]);
   const [loading, setLoading] = useState(false);
@@ -312,6 +393,8 @@ const Students: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Apprenant | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -322,16 +405,13 @@ const Students: React.FC = () => {
     cin: '',
   });
 
-  useEffect(() => {
-    loadStudents();
-  }, [pagination.page, pagination.size]);
-
+  // Unifier les déclencheurs: page, size, sorting, searchTerm
   useEffect(() => {
     const debounce = setTimeout(() => {
-      handleSearch();
-    }, 300);
+      loadStudents();
+    }, 250);
     return () => clearTimeout(debounce);
-  }, [searchTerm, sorting]);
+  }, [pagination.page, pagination.size, sorting.sortBy, sorting.sortDirection, searchTerm]);
 
   const loadStudents = async (search: string = searchTerm) => {
     try {
@@ -344,11 +424,13 @@ const Students: React.FC = () => {
         search: search,
       };
       const response = await apiService.search(params);
-      setStudents(response.content || []);
+      setStudents(response.data || []);
       setPagination(prev => ({
         ...prev,
-        totalPages: response.totalPages,
-        totalElements: response.totalElements,
+        page: response.pagination.current_page,
+        size: response.pagination.page_size,
+        totalPages: response.pagination.total_pages,
+        totalElements: response.pagination.total_elements,
       }));
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
@@ -363,8 +445,8 @@ const Students: React.FC = () => {
   };
 
   const handleSearch = () => {
-    setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page on new search
-    loadStudents(searchTerm);
+    // Réinitialiser à la première page; le useEffect déclenchera loadStudents après MAJ d'état
+    setPagination(prev => ({ ...prev, page: 0 }));
   };
 
   const resetForm = () => {
@@ -493,6 +575,100 @@ const Students: React.FC = () => {
     setIsDetailsModalOpen(true);
   };
 
+  const handleExport = async (format: 'csv' | 'excel', scope: 'all' | 'page') => {
+    try {
+      setIsExporting(true);
+      toast({ title: t('exportInProgress'), description: t('generatingFile') });
+
+      const params = scope === 'page' ? {
+        page: pagination.page,
+        size: pagination.size,
+        sortBy: sorting.sortBy,
+        sortDir: sorting.sortDirection,
+        search: searchTerm,
+      } : {};
+
+      const { blob, filename } = await apiService.exportData(format, scope, params);
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({ title: t('success'), description: t('exportSuccessful') });
+    } catch (error) {
+      console.error("Erreur lors de l'exportation:", error);
+      toast({
+        title: t('error'),
+        description: error instanceof Error ? error.message : t('exportFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      toast({
+        title: t('importInProgress'),
+        description: t('importingFile', { fileName: file.name }),
+      });
+
+      const result = await apiService.importData(file);
+
+      if (result.errors && result.errors.length > 0) {
+        const errorMessages = result.errors.map(err => `Ligne ${err.rowNumber}: ${err.message}`).join('\n');
+        toast({
+          title: t('importPartialSuccess'),
+          description: (
+            <div className="text-sm">
+              <p>{t('importSummary', { inserted: result.inserted, skipped: result.skipped })}</p>
+              <p className="font-bold mt-2">{t('errorsFound')}:</p>
+              <pre className="mt-1 whitespace-pre-wrap text-xs bg-muted p-2 rounded-md">{errorMessages}</pre>
+            </div>
+          ),
+          variant: 'destructive',
+          duration: 15000,
+        });
+      } else {
+        toast({
+          title: t('success'),
+          description: t('importSuccessful', { count: result.inserted }),
+        });
+      }
+
+      if (result.inserted > 0) {
+        await loadStudents(); // Recharger la liste si au moins un a été inséré
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'importation:", error);
+      toast({
+        title: t('error'),
+        description: error instanceof Error ? error.message : t('importFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   // La logique de filtrage est maintenant gérée par le backend
   const filteredStudents = students;
 
@@ -539,13 +715,52 @@ const Students: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="glass border-border/30"
+                      disabled={isExporting}
+                    >
+                      {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="glass-card">
+                    <DropdownMenuLabel>{t('exportOptions')}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleExport('excel', 'page')}>
+                      {t('exportCurrentPage')} (Excel)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('csv', 'page')}>
+                      {t('exportCurrentPage')} (CSV)
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleExport('excel', 'all')}>
+                      {t('exportAll')} (Excel)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('csv', 'all')}>
+                      {t('exportAll')} (CSV)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button
                   variant="outline"
                   size="icon"
                   className="glass border-border/30"
+                  onClick={handleImportClick}
+                  disabled={isImporting}
                 >
-                  <Download className="w-4 h-4" />
+                  {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileImport}
+                  className="hidden"
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                />
                 
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>

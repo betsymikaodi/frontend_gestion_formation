@@ -68,8 +68,9 @@ const Enrollments: React.FC = () => {
       
       // Fetch students
       console.log('Chargement des apprenants...');
-      const studentsResponse = await fetch('http://localhost:8080/api/apprenants');
-      const studentsData = studentsResponse.ok ? await studentsResponse.json() : [];
+      const studentsResponse = await fetch('http://localhost:8080/api/apprenants?size=1000'); // Fetch a large number to get all students
+      const studentsPaginatedData = studentsResponse.ok ? await studentsResponse.json() : { data: [] };
+      const studentsData = studentsPaginatedData.data || [];
       console.log('Apprenants reçus:', studentsData);
       
       // Fetch courses
