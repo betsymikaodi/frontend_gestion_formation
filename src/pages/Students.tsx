@@ -48,10 +48,26 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import StudentDetailsModal from '@/components/ui/student-details-modal';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+
+// Interface pour la réponse paginée
+interface PaginatedResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+}
 
 // Interface pour l'API Spring Boot
 interface Apprenant {
@@ -71,8 +87,9 @@ interface Apprenant {
 const API_BASE_URL = 'http://localhost:8080/api';
 
 const apiService = {
-  async getAll(): Promise<Apprenant[]> {
-    const response = await fetch(`${API_BASE_URL}/apprenants`, {
+  async search(params: { [key: string]: any }): Promise<PaginatedResponse<Apprenant>> {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_BASE_URL}/apprenants?${query}`, {
       headers: {
         'Accept': 'application/json',
       },
@@ -278,7 +295,19 @@ const Students: React.FC = () => {
   const [students, setStudents] = useState<Apprenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  
+  // State for pagination and sorting
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 0,
+    totalElements: 0,
+  });
+  const [sorting, setSorting] = useState({
+    sortBy: 'dateNow',
+    sortDirection: 'desc',
+  });
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -295,13 +324,32 @@ const Students: React.FC = () => {
 
   useEffect(() => {
     loadStudents();
-  }, []);
+  }, [pagination.page, pagination.size]);
 
-  const loadStudents = async () => {
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      handleSearch();
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [searchTerm, sorting]);
+
+  const loadStudents = async (search: string = searchTerm) => {
     try {
       setLoading(true);
-      const apprenants = await apiService.getAll();
-      setStudents(Array.isArray(apprenants) ? apprenants : []);
+      const params = {
+        page: pagination.page,
+        size: pagination.size,
+        sortBy: sorting.sortBy,
+        sortDirection: sorting.sortDirection,
+        search: search,
+      };
+      const response = await apiService.search(params);
+      setStudents(response.content || []);
+      setPagination(prev => ({
+        ...prev,
+        totalPages: response.totalPages,
+        totalElements: response.totalElements,
+      }));
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast({
@@ -312,6 +360,11 @@ const Students: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page on new search
+    loadStudents(searchTerm);
   };
 
   const resetForm = () => {
@@ -440,19 +493,8 @@ const Students: React.FC = () => {
     setIsDetailsModalOpen(true);
   };
 
-  // Filter students
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = 
-      student.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.cin.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Pour la compatibilité avec le filtre de status, on considère tous comme actifs
-    const matchesStatus = statusFilter === 'all' || statusFilter === 'active';
-    
-    return matchesSearch && matchesStatus;
-  });
+  // La logique de filtrage est maintenant gérée par le backend
+  const filteredStudents = students;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -538,27 +580,44 @@ const Students: React.FC = () => {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder={t('search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 glass border-border/30"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pr-10 glass border-border/30"
+                />
+                <Search 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground cursor-pointer"
+                  onClick={handleSearch}
                 />
               </div>
               
               <Select
-                value={statusFilter}
-                onValueChange={(value: 'all' | 'active' | 'inactive') => setStatusFilter(value)}
+                value={sorting.sortBy}
+                onValueChange={(value) => setSorting(prev => ({ ...prev, sortBy: value }))}
               >
-                <SelectTrigger className="w-40 glass border-border/30">
-                  <Filter className="w-4 h-4 mr-2" />
+                <SelectTrigger className="w-48 glass border-border/30">
+                  <SelectValue placeholder={t('sortBy')} />
+                </SelectTrigger>
+                <SelectContent className="glass-card">
+                  <SelectItem value="dateNow">{t('registrationDate')}</SelectItem>
+                  <SelectItem value="nom">{t('lastName')}</SelectItem>
+                  <SelectItem value="prenom">{t('firstName')}</SelectItem>
+                  <SelectItem value="email">{t('email')}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={sorting.sortDirection}
+                onValueChange={(value) => setSorting(prev => ({ ...prev, sortDirection: value }))}
+              >
+                <SelectTrigger className="w-32 glass border-border/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="glass-card">
-                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
-                  <SelectItem value="active">{t('active')}</SelectItem>
-                  <SelectItem value="inactive">{t('inactive')}</SelectItem>
+                  <SelectItem value="desc">{t('descending')}</SelectItem>
+                  <SelectItem value="asc">{t('ascending')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -736,6 +795,72 @@ const Students: React.FC = () => {
                   <p className="text-muted-foreground">{t('noStudentFound')}</p>
                 </div>
               )}
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between pt-4">
+              <div className="text-sm text-muted-foreground">
+                {t('totalOf', { total: pagination.totalElements })} {t('results')}
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{t('rowsPerPage')}</span>
+                  <Select
+                    value={pagination.size.toString()}
+                    onValueChange={(value) => setPagination(p => ({ ...p, size: Number(value), page: 0 }))}
+                  >
+                    <SelectTrigger className="w-20 glass border-border/30">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="glass-card">
+                      {[10, 20, 50, 100].map(size => (
+                        <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm">
+                  {t('page')} {pagination.page + 1} {t('of')} {pagination.totalPages}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-8 h-8"
+                    onClick={() => setPagination(p => ({ ...p, page: 0 }))}
+                    disabled={pagination.page === 0}
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-8 h-8"
+                    onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                    disabled={pagination.page === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-8 h-8"
+                    onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                    disabled={pagination.page >= pagination.totalPages - 1}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-8 h-8"
+                    onClick={() => setPagination(p => ({ ...p, page: pagination.totalPages - 1 }))}
+                    disabled={pagination.page >= pagination.totalPages - 1}
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
