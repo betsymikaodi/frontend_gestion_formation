@@ -145,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Training Hub</h2>
+                <h2 className="text-lg font-semibold text-foreground">VISECO</h2>
                 <p className="text-sm text-muted-foreground">{user?.role === 'admin' ? t('admin') : t('user')}</p>
               </div>
             </div>

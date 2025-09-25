@@ -159,7 +159,7 @@ const Login: React.FC = () => {
             </motion.div>
             
             <CardTitle className="text-2xl font-bold text-foreground">
-              Training Hub
+              VISECO
             </CardTitle>
             <CardDescription className="text-muted-foreground">
               {isLogin ? t('signin') : t('createAccount')}
