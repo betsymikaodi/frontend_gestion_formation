@@ -254,7 +254,15 @@ const resources = {
       updateStudentInfo: "Update student information",
       addNewStudentToSystem: "Add a new student to the system",
       noStudentFound: "No student found",
-      loading: "Loading..."
+      loading: "Loading...",
+      studentDetailsTitle: "Details for {{name}}",
+      studentDetailsDescription: "Complete information for student ID: {{id}}",
+      totalPaid: "Total Paid",
+      remainingAmount: "Remaining Amount",
+      payments: "Payments",
+      paymentDate: "Payment Date",
+      noPaymentsFound: "No payments found for this enrollment",
+      noEnrollmentsFound: "No enrollments found for this student",
     }
   },
   fr: {
@@ -509,7 +517,15 @@ const resources = {
       updateStudentInfo: "Mettre à jour les informations de l'étudiant",
       addNewStudentToSystem: "Ajouter un nouvel étudiant au système",
       noStudentFound: "Aucun étudiant trouvé",
-      loading: "Chargement..."
+      loading: "Chargement...",
+      studentDetailsTitle: "Détails de {{name}}",
+      studentDetailsDescription: "Informations complètes pour l'étudiant ID : {{id}}",
+      totalPaid: "Total Payé",
+      remainingAmount: "Montant Restant",
+      payments: "Paiements",
+      paymentDate: "Date de paiement",
+      noPaymentsFound: "Aucun paiement trouvé pour cette inscription",
+      noEnrollmentsFound: "Aucune inscription trouvée pour cet étudiant",
     }
   }
 };

@@ -50,6 +50,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import StudentDetailsModal from '@/components/ui/student-details-modal';
 import { cn } from '@/lib/utils';
 
 // Interface pour l'API Spring Boot
@@ -280,6 +281,7 @@ const Students: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Apprenant | null>(null);
   const [formData, setFormData] = useState({
     nom: '',
@@ -431,6 +433,11 @@ const Students: React.FC = () => {
       cin: student.cin,
     });
     setIsEditDialogOpen(true);
+  };
+
+  const openDetailsModal = (student: Apprenant) => {
+    setSelectedStudent(student);
+    setIsDetailsModalOpen(true);
   };
 
   // Filter students
@@ -636,11 +643,17 @@ const Students: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               className="w-8 h-8 hover:bg-accent/50"
+                              onClick={() => openDetailsModal(student)}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
                             
-                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <Dialog open={isEditDialogOpen && selectedStudent?.idApprenant === student.idApprenant} onOpenChange={(isOpen) => {
+                              if (!isOpen) {
+                                setSelectedStudent(null);
+                                resetForm();
+                              }
+                            }}>
                               <DialogTrigger asChild>
                                 <Button
                                   variant="ghost"
@@ -727,6 +740,11 @@ const Students: React.FC = () => {
           </CardContent>
         </Card>
       </motion.div>
+      <StudentDetailsModal
+        student={selectedStudent}
+        isOpen={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+      />
     </motion.div>
   );
 };
